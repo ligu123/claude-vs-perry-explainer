@@ -1,9 +1,9 @@
-// explainer.jsx — "Claude Cowork vs Perry" animated explainer.
+// explainer.jsx — "Why Perry Does What Claude Cannot" animated explainer.
 // Reads timeline primitives from window (animations.jsx loaded first).
 const { Stage, Sprite, useSprite, useTime, Easing, interpolate, animate, clamp } = window;
 
 // ── Palette ──────────────────────────────────────────────────────────────────
-const BG          = '#FBFAF8';
+const BG          = '#FFFFFF';
 const INK         = '#1C1B18';
 const INK_SOFT    = '#6B6559';
 const INK_FAINT   = '#98917F';
@@ -19,15 +19,19 @@ const AMBER_BD    = '#EED9AE';
 const RED         = '#B24A32';
 const RED_SOFT    = '#F7E7E1';
 const RED_BD      = '#E7C6BA';
-const BORDER      = '#E9E5DD';
+const BORDER      = '#E6E6E6';
 const WHITE       = '#FFFFFF';
+const MUTED       = '#F0F0F0';
 
 const CLAUDE      = '#D97757';
 const CLAUDE_SOFT = '#F5EAE5';
 const CLAUDE_BD   = '#E8C4B8';
-const CLAUDE_BG   = '#FAF9F5';
+const CLAUDE_BG   = '#FFFFFF';
+
+const HI_CLAUDE = { color: CLAUDE, fontWeight: 700 };
+const HI_ACCENT = { color: ACCENT, fontWeight: 700 };
+const HI_INK    = { color: INK, fontWeight: 600 };
 const CLAUDE_INK  = '#141413';
-const CLAUDE_MID  = '#B0AEA5';
 
 const SANS  = "'Inter', system-ui, sans-serif";
 const SERIF = "'Source Serif 4', Georgia, serif";
@@ -44,7 +48,6 @@ const R_MIN = 3;
 const R_PILL = 999;
 const R_DOT = 99;
 
-// ── Reveal helpers ───────────────────────────────────────────────────────────
 function fx(localTime, delay = 0, dur = 0.55, dist = 14) {
   const t = clamp((localTime - delay) / dur, 0, 1);
   const e = Easing.easeOutCubic(t);
@@ -53,12 +56,7 @@ function fx(localTime, delay = 0, dur = 0.55, dist = 14) {
 function grow(localTime, delay = 0, dur = 0.6) {
   return Easing.easeOutCubic(clamp((localTime - delay) / dur, 0, 1));
 }
-function countUp(localTime, delay, dur, target) {
-  const t = clamp((localTime - delay) / dur, 0, 1);
-  return Math.round(target * Easing.easeOutCubic(t));
-}
 
-// ── Small building blocks ────────────────────────────────────────────────────
 function Eyebrow({ n, label, x = 64, y = 52 }) {
   return (
     <div style={{ position: 'absolute', left: x, top: y, display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -71,12 +69,13 @@ function Eyebrow({ n, label, x = 64, y = 52 }) {
 
 function Chip({ children, tone = 'neutral', style = {} }) {
   const tones = {
-    neutral: { bg: '#F3F1EB', fg: INK_SOFT, bd: BORDER },
+    neutral: { bg: MUTED, fg: INK_SOFT, bd: BORDER },
     accent:  { bg: ACCENT_SOFT, fg: ACCENT, bd: ACCENT_BD },
     green:   { bg: GREEN_SOFT, fg: GREEN, bd: GREEN_BD },
     amber:   { bg: AMBER_SOFT, fg: AMBER, bd: AMBER_BD },
     red:     { bg: RED_SOFT, fg: RED, bd: RED_BD },
     ink:     { bg: INK, fg: '#F6F4EF', bd: INK },
+    claude:  { bg: CLAUDE_SOFT, fg: CLAUDE, bd: CLAUDE_BD },
   };
   const c = tones[tone] || tones.neutral;
   return (
@@ -89,23 +88,7 @@ function Dot({ color, size = 7 }) {
 }
 
 function PerryLogo({ height = 28, style = {} }) {
-  return (
-    <img
-      src={PERRY_LOGO}
-      alt=""
-      style={{ height, width: 'auto', display: 'block', flexShrink: 0, ...style }}
-    />
-  );
-}
-
-function StatusPill({ label, tone }) {
-  const map = { green: [GREEN_SOFT, GREEN, GREEN_BD], accent: [ACCENT_SOFT, ACCENT, ACCENT_BD], amber: [AMBER_SOFT, AMBER, AMBER_BD], red: [RED_SOFT, RED, RED_BD] };
-  const [bg, fg, bd] = map[tone] || map.accent;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', borderRadius: R_PILL, background: bg, color: fg, border: `1px solid ${bd}`, fontSize: 12, fontWeight: 600, fontFamily: SANS, whiteSpace: 'nowrap' }}>
-      <Dot color={fg} size={6} />{label}
-    </span>
-  );
+  return <img src={PERRY_LOGO} alt="" style={{ height, width: 'auto', display: 'block', flexShrink: 0, ...style }} />;
 }
 
 function SourceRef({ children, style = {} }) {
@@ -128,21 +111,6 @@ function DocIcon({ color = ACCENT, w = 15 }) {
   );
 }
 
-function DocCard({ title, meta, w = 230, tone = ACCENT, style = {} }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: w, padding: '13px 15px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_CARD, boxShadow: SHADOW_SM, ...style }}>
-      <div style={{ width: 34, height: 34, borderRadius: R_CTRL, background: ACCENT_SOFT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <DocIcon color={tone} />
-      </div>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 600, color: INK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{title}</div>
-        {meta && <div style={{ fontFamily: MONO, fontSize: 11, color: INK_FAINT, marginTop: 3, letterSpacing: '0.01em' }}>{meta}</div>}
-      </div>
-    </div>
-  );
-}
-
-// horizontal arrow with a flowing dot
 function FlowArrow({ length = 90, localTime = 0, delay = 0, color = ACCENT }) {
   const p = grow(localTime, delay, 0.5);
   const drawn = length * p;
@@ -161,7 +129,6 @@ function ColLabel({ children }) {
   return <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>{children}</div>;
 }
 
-// ── Scene wrapper (crossfade) ────────────────────────────────────────────────
 function Scene({ children, fadeIn = 0.5, fadeOut = 0.5, drift = 0 }) {
   const { localTime, duration } = useSprite();
   const op = Math.min(clamp(localTime / fadeIn, 0, 1), clamp((duration - localTime) / fadeOut, 0, 1));
@@ -173,16 +140,17 @@ function Scene({ children, fadeIn = 0.5, fadeOut = 0.5, drift = 0 }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// FULL-SCREEN QUESTION INTERSTITIAL (dark)
-// ═══════════════════════════════════════════════════════════════════════════
-function QInterstitial({ kicker, lines, ghost }) {
+function QInterstitial({ kicker, lines, ghost, part }) {
   const { localTime } = useSprite();
   return (
     <Scene fadeIn={0.45} fadeOut={0.4} drift={0.02}>
       <div style={{ position: 'absolute', inset: 0, background: INK, overflow: 'hidden' }}>
-        {/* ghost numeral */}
         <div style={{ position: 'absolute', right: -30, bottom: -120, fontFamily: SERIF, fontSize: 460, fontWeight: 700, color: 'rgba(255,255,255,0.035)', lineHeight: 1, ...fx(localTime, 0.1, 1.0, 0) }}>{ghost}</div>
+        {part && (
+          <div style={{ position: 'absolute', left: 64, top: 52, ...fx(localTime, 0.05, 0.5, 8) }}>
+            <span style={{ fontFamily: MONO, fontSize: 12, fontWeight: 500, color: ACCENT, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{part}</span>
+          </div>
+        )}
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 96px' }}>
           <div style={{ textAlign: 'center', maxWidth: 960 }}>
             <div style={{ ...fx(localTime, 0.1, 0.6, 10), display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 26 }}>
@@ -190,7 +158,7 @@ function QInterstitial({ kicker, lines, ghost }) {
               <span style={{ fontFamily: MONO, fontSize: 13, fontWeight: 500, color: ACCENT, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{kicker}</span>
             </div>
             {lines.map((ln, i) => (
-              <div key={i} style={{ ...fx(localTime, 0.3 + i * 0.16, 0.65, 20), fontFamily: SERIF, fontSize: 62, fontWeight: 600, color: '#F6F4EF', lineHeight: 1.08, letterSpacing: '-0.02em' }}>{ln}</div>
+              <div key={i} style={{ ...fx(localTime, 0.3 + i * 0.16, 0.65, 20), fontFamily: SERIF, fontSize: 58, fontWeight: 600, color: '#F6F4EF', lineHeight: 1.08, letterSpacing: '-0.02em' }}>{ln}</div>
             ))}
           </div>
         </div>
@@ -199,114 +167,715 @@ function QInterstitial({ kicker, lines, ghost }) {
   );
 }
 
+function PullQuote({ children, localTime, delay = 0, dark = false }) {
+  return (
+    <div style={{ ...fx(localTime, delay, 0.7, 16), padding: '22px 28px', background: dark ? INK : WHITE, border: `1px solid ${dark ? INK : BORDER}`, borderRadius: R_PANEL, boxShadow: dark ? SHADOW : SHADOW_SM, borderLeft: `4px solid ${ACCENT}` }}>
+      <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 600, color: dark ? '#F6F4EF' : INK, lineHeight: 1.35, letterSpacing: '-0.01em' }}>{children}</div>
+    </div>
+  );
+}
+
+function BottomBar({ children, localTime, delay = 2.2 }) {
+  return (
+    <div style={{ position: 'absolute', left: 64, right: 64, bottom: 40, ...fx(localTime, delay, 0.7, 10), display: 'flex', alignItems: 'center', gap: 12 }}>
+      <span style={{ width: 26, height: 26, borderRadius: R_DOT, background: ACCENT_SOFT, border: `1px solid ${ACCENT_BD}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: SERIF, fontSize: 15, color: ACCENT, fontWeight: 700 }}>→</span>
+      <span style={{ fontFamily: SANS, fontSize: 15.5, color: INK_SOFT, fontWeight: 500, lineHeight: 1.4 }}>{children}</span>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
-// SCENE 1 — TITLE
+// ARGUMENT 1 — WHY PERRY DOES WHAT CLAUDE CANNOT
 // ═══════════════════════════════════════════════════════════════════════════
+
 function S1_Title() {
   const { localTime } = useSprite();
-  const ruleW = 340 * grow(localTime, 0.35, 0.9);
+  const ruleW = 380 * grow(localTime, 0.35, 0.9);
   return (
     <Scene>
-      <Eyebrow n="00" label="A Buyer's Field Guide" />
-      <div style={{ position: 'absolute', left: 64, top: 232, right: 64 }}>
-        <div style={{ ...fx(localTime, 0.15, 0.7, 18), fontFamily: SERIF, fontSize: 78, fontWeight: 600, color: INK, lineHeight: 1.02, letterSpacing: '-0.02em' }}>
-          Claude Cowork <span style={{ color: INK_FAINT, fontWeight: 400 }}>vs</span> Perry
+      <Eyebrow n="01" label="Argument 1" />
+      <div style={{ position: 'absolute', left: 64, top: 210, right: 64 }}>
+        <div style={{ ...fx(localTime, 0.15, 0.7, 18), fontFamily: SERIF, fontSize: 72, fontWeight: 600, color: INK, lineHeight: 1.04, letterSpacing: '-0.02em' }}>
+          Why Perry Does What Claude Cannot
         </div>
         <div style={{ height: 2, width: ruleW, background: ACCENT, margin: '28px 0 26px', borderRadius: 2 }} />
-        <div style={{ ...fx(localTime, 0.6, 0.7, 14), fontFamily: SANS, fontSize: 27, fontWeight: 500, color: INK_SOFT, letterSpacing: '-0.01em' }}>
-          AI Capability <span style={{ color: INK_FAINT }}>vs</span> a Legal Operating System
+        <div style={{ ...fx(localTime, 0.55, 0.7, 14), fontFamily: SANS, fontSize: 26, fontWeight: 500, color: INK_SOFT, letterSpacing: '-0.01em', lineHeight: 1.35 }}>
+          Claude provides <span style={HI_INK}>legal reasoning</span>. Perry provides a <span style={HI_ACCENT}>legal system of record</span>.
         </div>
       </div>
-      <div style={{ position: 'absolute', left: 64, bottom: 58, ...fx(localTime, 1.1, 0.7, 10) }}>
-        <span style={{ fontFamily: MONO, fontSize: 13, color: INK_FAINT, letterSpacing: '0.02em' }}>Why the real question isn't which is smarter — it's what gets packaged.</span>
+      <div style={{ position: 'absolute', left: 64, bottom: 58, ...fx(localTime, 1.0, 0.7, 10) }}>
+        <span style={{ fontFamily: MONO, fontSize: 13, color: INK_FAINT }}>Not "Claude isn't smart enough" — they're different product categories.</span>
       </div>
     </Scene>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENE 2 — CORE DISTINCTION
-// ═══════════════════════════════════════════════════════════════════════════
-function S2_Distinction() {
+function S2_Categories() {
   const { localTime } = useSprite();
-  const docs = ['Fund LPA', 'Side letter', 'Subscription agmt', 'Amendment 02', 'Review report'];
-  const actions = ['Read', 'Extract', 'Compare', 'Flag risk', 'Report'];
-  const nodes = ['Funds', 'Investors', 'Documents', 'Obligations', 'Approvals', 'Activity log'];
-
+  const claudePoints = ['Extraction', 'Comparison', 'Drafting', 'Summarization', 'One-off review'];
+  const perryPoints = ['Canonical fund record', 'Entity graph', 'Obligation state', 'Cross-document truth', 'Governed reuse'];
   return (
     <Scene>
-      <Eyebrow n="01" label="The Core Distinction" />
-      {/* LEFT — Claude */}
-      <div style={{ position: 'absolute', left: 64, top: 108, width: 500, ...fx(localTime, 0.2, 0.6, 16) }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <span style={{ fontFamily: SANS, fontSize: 19, fontWeight: 700, color: INK }}>Claude Cowork</span>
-          <Chip tone="accent" style={{ fontSize: 11.5, padding: '4px 9px' }}>+ Legal Skill</Chip>
-        </div>
-        <div style={{ fontFamily: MONO, fontSize: 12, color: INK_FAINT, marginBottom: 16 }}>a capable assistant · one matter at a time</div>
-        <div style={{ padding: 18, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW }}>
-          <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Workspace · you supply the documents</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {docs.map((d, i) => (
-              <div key={d} style={{ ...fx(localTime, 0.5 + i * 0.12, 0.45, 10), display: 'flex', alignItems: 'center', gap: 10, padding: '9px 11px', background: '#FCFBF9', border: `1px solid ${BORDER}`, borderRadius: R_CTRL }}>
-                <DocIcon w={13} />
-                <span style={{ fontFamily: SANS, fontSize: 13.5, fontWeight: 500, color: INK }}>{d}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 14 }}>
-            {actions.map((a, i) => (
-              <div key={a} style={fx(localTime, 1.2 + i * 0.1, 0.4, 8)}><Chip>{a}</Chip></div>
-            ))}
-          </div>
-        </div>
-        <div style={{ ...fx(localTime, 1.9, 0.6, 8), marginTop: 15, fontFamily: SERIF, fontSize: 18, fontWeight: 600, color: INK }}>Strong at completing legal tasks.</div>
+      <Eyebrow n="01 · A" label="Different Questions" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Claude is already powerful — so why isn't it enough?</div>
+        <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 500, color: INK_FAINT, marginTop: 6, lineHeight: 1.4 }}>In many scenarios a vertical platform is genuinely unnecessary. The judgment is about category, not intelligence.</div>
       </div>
 
-      {/* Divider */}
-      <div style={{ position: 'absolute', left: 636, top: 132, bottom: 150, width: 1, background: BORDER }} />
-      <div style={{ position: 'absolute', left: 616, top: '48%', width: 40, height: 40, borderRadius: R_DOT, background: WHITE, border: `1px solid ${BORDER}`, boxShadow: SHADOW_SM, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 15, fontWeight: 600, color: INK_FAINT, ...fx(localTime, 0.9, 0.5, 0) }}>vs</div>
-
-      {/* RIGHT — Perry */}
-      <div style={{ position: 'absolute', left: 712, top: 108, width: 504, ...fx(localTime, 0.35, 0.6, 16) }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <PerryLogo height={22} />
-          <Chip tone="amber" style={{ fontSize: 11.5, padding: '4px 9px' }}>the real product</Chip>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 178, bottom: 88, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {/* Claude — top */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: 24, padding: '22px 26px', background: CLAUDE_BG, border: `1px solid ${CLAUDE_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW, ...fx(localTime, 0.35, 0.6, 18) }}>
+          <div style={{ flex: 1.15, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <Chip tone="claude" style={{ marginBottom: 12, alignSelf: 'flex-start' }}>Claude solves</Chip>
+            <div style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 600, color: CLAUDE_INK, lineHeight: 1.28, letterSpacing: '-0.01em' }}>How can a single legal task be completed faster?</div>
+          </div>
+          <div style={{ width: 1, background: CLAUDE_BD, flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 8, alignContent: 'center' }}>
+            {claudePoints.map((p, i) => (
+              <span key={p} style={{ ...fx(localTime, 0.7 + i * 0.1, 0.4, 8), padding: '8px 13px', borderRadius: R_PILL, background: WHITE, border: `1px solid ${CLAUDE_BD}`, fontFamily: SANS, fontSize: 13, fontWeight: 500, color: CLAUDE_INK }}>{p}</span>
+            ))}
+          </div>
         </div>
-        <div style={{ fontFamily: MONO, fontSize: 12, color: INK_FAINT, marginBottom: 16 }}>a persistent legal operating system</div>
-        <div style={{ position: 'relative', width: '100%', height: 306, background: WHITE, border: `1.5px solid ${ACCENT_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW, overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-            <div style={{ ...fx(localTime, 0.6, 0.5, 0) }}>
-              <div style={{ padding: '10px 16px', borderRadius: R_BOX, background: ACCENT, color: WHITE, fontFamily: SANS, fontSize: 14, fontWeight: 600, boxShadow: '0 6px 18px rgba(0,156,127,.28)' }}>Fund record</div>
+
+        {/* vs divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0, ...fx(localTime, 0.55, 0.45, 0) }}>
+          <div style={{ flex: 1, height: 1, background: BORDER }} />
+          <span style={{ fontFamily: SERIF, fontSize: 14, fontWeight: 600, color: INK_FAINT, fontStyle: 'italic' }}>different product category</span>
+          <div style={{ flex: 1, height: 1, background: BORDER }} />
+        </div>
+
+        {/* Perry — bottom */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', gap: 24, padding: '22px 26px', background: WHITE, border: `1.5px solid ${ACCENT_BD}`, borderRadius: R_PANEL, boxShadow: '0 1px 2px rgba(28,27,24,.05), 0 16px 40px rgba(0,156,127,.1)', ...fx(localTime, 0.5, 0.6, 18) }}>
+          <div style={{ flex: 1.15, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <PerryLogo height={20} />
+              <Chip tone="accent">Perry solves</Chip>
+            </div>
+            <div style={{ fontFamily: SERIF, fontSize: 26, fontWeight: 600, color: INK, lineHeight: 1.28, letterSpacing: '-0.01em' }}>How can a fund's legal truth be maintained, reused, and governed over the long term?</div>
+          </div>
+          <div style={{ width: 1, background: ACCENT_BD, flexShrink: 0 }} />
+          <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 8, alignContent: 'center' }}>
+            {perryPoints.map((p, i) => (
+              <span key={p} style={{ ...fx(localTime, 0.85 + i * 0.1, 0.4, 8), padding: '8px 13px', borderRadius: R_PILL, background: ACCENT_SOFT, border: `1px solid ${ACCENT_BD}`, fontFamily: SANS, fontSize: 13, fontWeight: 500, color: INK }}>{p}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <BottomBar localTime={localTime} delay={2.0}>Task execution vs. a fund-level system of record.</BottomBar>
+    </Scene>
+  );
+}
+
+function EphemeralPanel({ localTime }) {
+  const steps = [
+    ['Project folder', 'LPA · side letter · amendment'],
+    ['Large context window', 'Many docs in one session'],
+    ['Complete one task', 'Extract · compare · draft'],
+    ['Context disperses', 'No same truth next time'],
+  ];
+  return (
+    <div style={{ padding: 20, background: CLAUDE_BG, border: `1px solid ${CLAUDE_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW_SM, height: '100%' }}>
+      <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: CLAUDE_INK, marginBottom: 4 }}>Claude Cowork</div>
+      <div style={{ fontFamily: MONO, fontSize: 11.5, color: INK_FAINT, marginBottom: 16 }}>one task · one context window</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {steps.map((s, i) => (
+          <div key={s[0]} style={{ ...fx(localTime, 0.5 + i * 0.18, 0.45, 10), padding: '12px 14px', background: WHITE, border: `1px solid ${i === 3 ? AMBER_BD : CLAUDE_BD}`, borderRadius: R_CTRL }}>
+            <div style={{ fontFamily: SANS, fontSize: 13.5, fontWeight: 600, color: i === 3 ? AMBER : CLAUDE_INK }}>{s[0]}</div>
+            <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 500, color: INK_SOFT, marginTop: 3 }}>{s[1]}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function GraphPanel({ localTime }) {
+  const nodes = ['Fund', 'LP / Investor', 'Document', 'Clause', 'Right', 'Obligation', 'Consent', 'Timeline'];
+  const features = [
+    'Updates existing nodes when amendments arrive',
+    'Same investor merged across LPA, side letter & amendment',
+    'Obligation status tracked — triggered, fulfilled, waived',
+    'Return to the same canonical source six years later',
+  ];
+  return (
+    <div style={{ padding: 20, background: WHITE, border: `1.5px solid ${ACCENT_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+        <PerryLogo height={18} />
+        <span style={{ fontFamily: SANS, fontSize: 16, fontWeight: 700, color: INK }}>Perry</span>
+      </div>
+      <div style={{ fontFamily: MONO, fontSize: 11.5, color: INK_FAINT, marginBottom: 14 }}>persistent record around the Fund entity</div>
+      <div style={{ position: 'relative', flex: 1, minHeight: 200, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_CARD, overflow: 'hidden', marginBottom: 14 }}>
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ ...fx(localTime, 0.7, 0.5, 0), padding: '9px 14px', borderRadius: R_BOX, background: ACCENT, color: WHITE, fontFamily: SANS, fontSize: 13, fontWeight: 700 }}>Fund</div>
+        </div>
+        {nodes.slice(1).map((n, i) => {
+          const ang = (-90 + i * (360 / (nodes.length - 1))) * Math.PI / 180;
+          const cx = 50 + Math.cos(ang) * 38;
+          const cy = 50 + Math.sin(ang) * 32;
+          const p = grow(localTime, 0.85 + i * 0.1, 0.45);
+          return (
+            <React.Fragment key={n}>
+              <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                <line x1="50%" y1="50%" x2={`${50 + (cx - 50) * p}%`} y2={`${50 + (cy - 50) * p}%`} stroke={ACCENT} strokeWidth="1.2" opacity="0.3" />
+              </svg>
+              <div style={{ position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)', opacity: p, padding: '5px 9px', borderRadius: R_MIN, background: WHITE, border: `1px solid ${ACCENT_BD}`, fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: INK, whiteSpace: 'nowrap' }}>{n}</div>
+            </React.Fragment>
+          );
+        })}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {features.map((f, i) => (
+          <div key={f} style={{ ...fx(localTime, 1.4 + i * 0.12, 0.4, 8), display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <Dot color={ACCENT} size={6} />
+            <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 500, color: INK_SOFT, lineHeight: 1.35 }}>{f}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function S3_DocDifference() {
+  const { localTime } = useSprite();
+  const hi = HI_CLAUDE;
+  return (
+    <Scene>
+      <Eyebrow n="01 · B" label="Context & Projects" />
+      <div style={{ position: 'absolute', left: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, color: INK, lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+          If Claude has a <span style={hi}>large context window</span> and a <span style={hi}>Project folder</span>, where is the difference?
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 8 }}>Not whether docs fit in context — whether they become a continuously maintainable structured knowledge graph.</div>
+      </div>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 188, display: 'flex', gap: 24, height: 420 }}>
+        <div style={{ flex: 1, ...fx(localTime, 0.3, 0.6, 16) }}><EphemeralPanel localTime={localTime} /></div>
+        <div style={{ display: 'flex', alignItems: 'center', paddingTop: 80 }}><FlowArrow length={64} localTime={localTime} delay={1.0} /></div>
+        <div style={{ flex: 1.15, ...fx(localTime, 0.45, 0.6, 16) }}><GraphPanel localTime={localTime} /></div>
+      </div>
+      <BottomBar localTime={localTime} delay={2.5}>
+        A <span style={HI_CLAUDE}>large context window</span> <span style={HI_INK}>≠</span> maintaining a canonical fund schema.
+      </BottomBar>
+    </Scene>
+  );
+}
+
+function WorkflowStepCard({ n, title, subtitle, children, localTime, delay, highlight }) {
+  return (
+    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', ...fx(localTime, delay, 0.55, 14) }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <span style={{ width: 28, height: 28, borderRadius: R_DOT, background: highlight ? ACCENT : MUTED, color: highlight ? WHITE : INK_FAINT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: MONO, fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{n}</span>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: INK }}>{title}</div>
+          <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 500, color: INK_SOFT, marginTop: 2 }}>{subtitle}</div>
+        </div>
+      </div>
+      <div style={{ flex: 1, padding: 16, background: highlight ? WHITE : WHITE, border: `1px solid ${highlight ? ACCENT_BD : BORDER}`, borderRadius: R_PANEL, boxShadow: highlight ? SHADOW_SM : 'none' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function IntakePanel({ localTime }) {
+  const docs = [
+    ['Fund LPA', 'PDF · 214 pp'],
+    ['Side letters', '9 documents'],
+    ['Amendment 02', 'PDF · 6 pp'],
+    ['Board consents', '3 documents'],
+  ];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
+      {docs.map((d, i) => (
+        <div key={d[0]} style={{ ...fx(localTime, 0.35 + i * 0.1, 0.4, 8), display: 'flex', alignItems: 'center', gap: 10, padding: '10px 11px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_CTRL }}>
+          <DocIcon w={13} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>{d[0]}</div>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: INK_FAINT, marginTop: 2 }}>{d[1]}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{ ...fx(localTime, 0.85, 0.45, 8), marginTop: 'auto', padding: '9px 11px', background: AMBER_SOFT, border: `1px solid ${AMBER_BD}`, borderRadius: R_CTRL, fontFamily: SANS, fontSize: 11.5, fontWeight: 500, color: INK, lineHeight: 1.35 }}>
+        New files merge into the existing fund record — not a new chat.
+      </div>
+    </div>
+  );
+}
+
+function DecomposePanel({ localTime }) {
+  const tasks = [
+    ['Extract clauses & definitions', 'LPA · side letters · amendments'],
+    ['Resolve investors & entities', 'Same LP across multiple documents'],
+    ['Identify rights & obligations', 'Triggers · deadlines · owners'],
+    ['Link consents & exceptions', 'MFN · LPAC · side letter carve-outs'],
+    ['Reconcile across versions', 'Amendment updates existing nodes'],
+  ];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, height: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, ...fx(localTime, 0.3, 0.4, 6) }}>
+        <PerryLogo height={16} />
+        <span style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: ACCENT }}>Perry decomposes fund information</span>
+      </div>
+      {tasks.map((t, i) => {
+        const done = grow(localTime, 0.5 + i * 0.14, 0.35) > 0.88;
+        return (
+          <div key={t[0]} style={{ ...fx(localTime, 0.45 + i * 0.1, 0.35, 6), display: 'flex', alignItems: 'flex-start', gap: 9, padding: '9px 10px', background: done ? ACCENT_SOFT : WHITE, border: `1px solid ${done ? ACCENT_BD : BORDER}`, borderRadius: R_CTRL }}>
+            <span style={{ width: 16, height: 16, borderRadius: R_DOT, background: done ? ACCENT : MUTED, border: `1px solid ${done ? ACCENT : BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+              {done && <svg width="9" height="9" viewBox="0 0 10 10"><path d="M2 5l2 2 4-4.5" stroke={WHITE} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: INK, lineHeight: 1.3 }}>{t[0]}</div>
+              <div style={{ fontFamily: MONO, fontSize: 9.5, color: INK_FAINT, marginTop: 2, lineHeight: 1.3 }}>{t[1]}</div>
             </div>
           </div>
-          {nodes.map((nlab, i) => {
-            const ang = (-90 + i * (360 / nodes.length)) * Math.PI / 180;
-            const R = 116;
-            const cx = 50 + Math.cos(ang) * (R / 5.04);
-            const cy = 50 + Math.sin(ang) * (R * 0.82 / 3.06);
-            const p = grow(localTime, 0.8 + i * 0.12, 0.5);
+        );
+      })}
+    </div>
+  );
+}
+
+function StructuredRecordPanel({ localTime }) {
+  const objects = [
+    ['Fund entity', 'Acme Ltd · canonical record', true],
+    ['Investors', '12 LPs merged across documents', false],
+    ['Rights', '17 source-linked investor rights', false],
+    ['Obligations', '9 active · status tracked', true],
+    ['Timeline', 'Closes · amendments · consents', false],
+  ];
+  const relations = ['Fund ↔ LP', 'LP ↔ Side letter', 'Clause ↔ Obligation', 'Document ↔ Source'];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, height: '100%' }}>
+      <div style={{ ...fx(localTime, 0.55, 0.45, 8), padding: '10px 12px', background: ACCENT, borderRadius: R_CTRL, textAlign: 'center' }}>
+        <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: WHITE }}>Structured fund schema</div>
+        <div style={{ fontFamily: MONO, fontSize: 9.5, color: 'rgba(255,255,255,0.82)', marginTop: 2 }}>governed · auditable · reusable</div>
+      </div>
+      {objects.map((o, i) => (
+        <div key={o[0]} style={{ ...fx(localTime, 0.65 + i * 0.08, 0.35, 6), display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', background: WHITE, border: `1px solid ${o[2] ? ACCENT_BD : BORDER}`, borderRadius: R_CTRL }}>
+          <Dot color={o[2] ? ACCENT : INK_FAINT} size={6} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{o[0]}</div>
+            <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 500, color: INK, marginTop: 1 }}>{o[1]}</div>
+          </div>
+          {o[2] && <SourceRef style={{ fontSize: 9 }}>linked</SourceRef>}
+        </div>
+      ))}
+      <div style={{ ...fx(localTime, 1.1, 0.4, 6), display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 'auto' }}>
+        {relations.map((r) => (
+          <span key={r} style={{ padding: '4px 8px', borderRadius: R_PILL, background: ACCENT_SOFT, border: `1px solid ${ACCENT_BD}`, fontFamily: MONO, fontSize: 9.5, color: ACCENT }}>{r}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function S4_KnowledgeGraph() {
+  const { localTime } = useSprite();
+  const hi = HI_CLAUDE;
+  return (
+    <Scene>
+      <Eyebrow n="01 · C" label="System of Record" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, color: INK, lineHeight: 1.2, letterSpacing: '-0.01em' }}>
+          A <span style={hi}>large context window</span> and <span style={hi}>Project folder</span> ≠ a canonical fund schema.
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 8 }}>Perry intakes documents, decomposes fund information, and structures it into a governed knowledge graph.</div>
+      </div>
+
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 178, bottom: 44, display: 'flex', alignItems: 'stretch', gap: 0, ...fx(localTime, 0.25, 0.55, 14) }}>
+        <WorkflowStepCard n="1" title="Intake documents" subtitle="LPA · side letters · amendments · consents" localTime={localTime} delay={0.35}>
+          <IntakePanel localTime={localTime} />
+        </WorkflowStepCard>
+
+        <div style={{ display: 'flex', alignItems: 'center', padding: '40px 8px 0', flexShrink: 0 }}>
+          <FlowArrow length={52} localTime={localTime} delay={0.7} />
+        </div>
+
+        <WorkflowStepCard n="2" title="Decompose fund information" subtitle="Extract · resolve · link · reconcile" localTime={localTime} delay={0.5} highlight>
+          <DecomposePanel localTime={localTime} />
+        </WorkflowStepCard>
+
+        <div style={{ display: 'flex', alignItems: 'center', padding: '40px 8px 0', flexShrink: 0 }}>
+          <FlowArrow length={52} localTime={localTime} delay={1.0} color={ACCENT} />
+        </div>
+
+        <WorkflowStepCard n="3" title="Structured fund record" subtitle="Canonical schema · source-linked · persistent" localTime={localTime} delay={0.65} highlight>
+          <StructuredRecordPanel localTime={localTime} />
+        </WorkflowStepCard>
+      </div>
+    </Scene>
+  );
+}
+
+function S4_SchemaClose() {
+  const { localTime } = useSprite();
+  return (
+    <Scene fadeIn={0.5} fadeOut={0.45}>
+      <Eyebrow n="01 · C" label="System of Record" />
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 96px' }}>
+        <div style={{ textAlign: 'center', maxWidth: 920 }}>
+          <div style={{ ...fx(localTime, 0.3, 0.7, 18), fontFamily: SERIF, fontSize: 50, fontWeight: 600, color: INK, lineHeight: 1.12, letterSpacing: '-0.02em' }}>
+            Documents in — structured fund schema out.
+          </div>
+          <div style={{ ...fx(localTime, 0.65, 0.65, 12), marginTop: 22, fontFamily: SANS, fontSize: 24, fontWeight: 500, color: INK_SOFT, lineHeight: 1.35 }}>
+            Not a longer chat history.
+          </div>
+        </div>
+      </div>
+    </Scene>
+  );
+}
+
+function IllustrationFrame({ children, localTime, delay = 0 }) {
+  return (
+    <div style={{ margin: '18px 28px 28px', flex: 1, minHeight: 300, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_CARD, overflow: 'hidden', position: 'relative', ...fx(localTime, delay, 0.45, 10) }}>
+      {children}
+    </div>
+  );
+}
+
+function SourceLinkedVisual({ localTime }) {
+  const floatP = grow(localTime, 0.55, 0.65);
+  const hiP = grow(localTime, 0.85, 0.5);
+  return (
+    <div style={{ position: 'absolute', inset: 0, padding: 28 }}>
+      {/* base — legal review result */}
+      <div style={{ ...fx(localTime, 0.2, 0.5, 12), height: '100%', padding: '22px 24px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_CARD, boxShadow: SHADOW_SM, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 18 }}>
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: 10.5, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Legal review result</div>
+            <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: INK_SOFT, marginTop: 4 }}>Fund record · Acme Ltd</div>
+          </div>
+          <Chip tone="green" style={{ fontSize: 10.5, padding: '4px 9px' }}>Verified</Chip>
+        </div>
+        <div style={{ fontFamily: SERIF, fontSize: 32, fontWeight: 600, color: INK, letterSpacing: '-0.02em', marginBottom: 12 }}>Investor rights · <span style={HI_ACCENT}>17</span></div>
+        <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 500, color: INK_SOFT, lineHeight: 1.55, maxWidth: 380 }}>"LPs holding more than 15% may request quarterly reporting and board observer rights."</div>
+        <div style={{ marginTop: 'auto', paddingTop: 20, borderTop: `1px solid ${BORDER}` }}>
+          <div style={{ display: 'flex', gap: 16 }}>
+            <div>
+              <div style={{ fontFamily: MONO, fontSize: 9.5, color: INK_FAINT, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Source</div>
+              <div style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 600, color: INK, marginTop: 4 }}>LPA.pdf · §8.4</div>
+            </div>
+            <div>
+              <div style={{ fontFamily: MONO, fontSize: 9.5, color: INK_FAINT, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Basis</div>
+              <div style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 500, color: INK_SOFT, marginTop: 4 }}>Clause-linked · not model memory</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* hovering quote card */}
+      <div style={{ position: 'absolute', right: 20, bottom: 20, width: '62%', opacity: floatP, transform: `translateY(${(1 - floatP) * 18}px)`, zIndex: 2, ...fx(localTime, 0.5, 0.55, 0) }}>
+        <div style={{ padding: '16px 18px', background: WHITE, border: `1.5px solid ${ACCENT_BD}`, borderRadius: R_CARD, boxShadow: '0 8px 32px rgba(28,27,24,.12), 0 2px 8px rgba(0,156,127,.08)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <DocIcon w={13} color={ACCENT} />
+            <SourceRef style={{ fontSize: 10.5 }}>LPA.pdf · Section 8.4</SourceRef>
+          </div>
+          <div style={{ position: 'relative', padding: '12px 14px', background: WHITE, borderRadius: R_MIN, border: `1px solid ${BORDER}` }}>
+            <div style={{ position: 'absolute', left: 10, right: 10, top: 10, height: `${hiP * 55}%`, background: AMBER_SOFT, borderRadius: R_MIN, opacity: 0.9 }} />
+            <div style={{ position: 'relative', fontFamily: SANS, fontSize: 12.5, fontWeight: 500, color: INK_SOFT, lineHeight: 1.55 }}>
+              <span style={{ color: INK_FAINT }}>8.4 </span>
+              <span style={HI_INK}>Major Investors</span>
+              <span style={{ color: INK_FAINT }}> — holders of 15% or more shall receive quarterly reporting…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ExpertEvaluatedVisual({ localTime }) {
+  const prompts = [
+    'Extract all investor rights from the LPA and side letters. Link each right to its source clause.',
+    'Does Amendment 02 trigger LPAC consent? Apply the fund\'s customized threshold rules.',
+    'Validate MFN eligibility for Investor A against customized election logic.',
+    'Flag any obligation missing a source link before it enters the fund record.',
+    'Review extraction output: do caveats, exceptions, and consents appear in the answer?',
+  ];
+  return (
+    <div style={{ position: 'absolute', inset: 0 }}>
+      {/* background — legal prompt texts */}
+      <div style={{ position: 'absolute', inset: 0, padding: '24px 28px', overflow: 'hidden', ...fx(localTime, 0.15, 0.5, 8) }}>
+        {prompts.map((p, i) => (
+          <div
+            key={i}
+            style={{
+              ...fx(localTime, 0.2 + i * 0.08, 0.4, 6),
+              marginBottom: 14,
+              padding: '12px 14px',
+              background: 'rgba(255,255,255,0.55)',
+              border: `1px solid ${BORDER}`,
+              borderRadius: R_CTRL,
+              fontFamily: MONO,
+              fontSize: 11,
+              fontWeight: 400,
+              color: INK_FAINT,
+              lineHeight: 1.5,
+              opacity: 0.45 + i * 0.04,
+            }}
+          >
+            {p}
+          </div>
+        ))}
+      </div>
+
+      {/* foreground — legal engineer avatars */}
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2, ...fx(localTime, 0.55, 0.6, 0) }}>
+        <div style={{ display: 'flex', alignItems: 'center', padding: '14px 20px', background: 'rgba(255,255,255,0.92)', border: `1px solid ${BORDER}`, borderRadius: R_PILL, boxShadow: SHADOW }}>
+          {['LE', 'LE', 'LE'].map((label, i) => (
+            <div
+              key={i}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: R_DOT,
+                background: i === 1 ? ACCENT : WHITE,
+                border: `2px solid ${i === 1 ? ACCENT : ACCENT_BD}`,
+                marginLeft: i > 0 ? -10 : 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontFamily: SANS,
+                fontSize: 12,
+                fontWeight: 700,
+                color: i === 1 ? WHITE : ACCENT,
+                boxShadow: SHADOW_SM,
+              }}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+        <div style={{ ...fx(localTime, 0.85, 0.5, 8), marginTop: 14, fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK, textAlign: 'center' }}>Legal engineers signed off</div>
+      </div>
+    </div>
+  );
+}
+
+function TrustPillar({ title, body, children, localTime, delay, illustrationDelay = 0.2 }) {
+  return (
+    <div style={{ flex: 1, minWidth: 0, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW_SM, overflow: 'hidden', display: 'flex', flexDirection: 'column', ...fx(localTime, delay, 0.55, 16) }}>
+      <div style={{ padding: '22px 28px 0' }}>
+        <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 700, color: INK, marginBottom: 8, lineHeight: 1.3 }}>{title}</div>
+        <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: INK_SOFT, lineHeight: 1.5 }}>{body}</div>
+      </div>
+      <IllustrationFrame localTime={localTime} delay={delay + illustrationDelay}>
+        {children}
+      </IllustrationFrame>
+    </div>
+  );
+}
+
+function S5_GCTrust() {
+  const { localTime } = useSprite();
+  return (
+    <Scene>
+      <Eyebrow n="01 · D" label="Why a GC Cares" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>A GC doesn't need a plausible answer.</div>
+        <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 500, color: INK_SOFT, marginTop: 10, lineHeight: 1.45 }}>They need an answer that can be <span style={HI_INK}>explained, audited, reused, and held accountable.</span></div>
+      </div>
+
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 188, bottom: 88, display: 'flex', gap: 36, alignItems: 'stretch' }}>
+        <TrustPillar
+          title="Source-linked answers"
+          body="Every number and obligation links back to a specific source — not what the model remembers."
+          localTime={localTime}
+          delay={0.3}
+        >
+          <SourceLinkedVisual localTime={localTime} />
+        </TrustPillar>
+        <TrustPillar
+          title="Legal engineer evaluated outputs"
+          body="Customized rules and output quality are reviewed by people who understand fund legal work."
+          localTime={localTime}
+          delay={0.45}
+        >
+          <ExpertEvaluatedVisual localTime={localTime} />
+        </TrustPillar>
+      </div>
+
+      <BottomBar localTime={localTime} delay={1.8}>
+        <span style={HI_CLAUDE}>Claude</span> can generate a plausible answer. A GC needs <span style={HI_INK}>defensible, auditable, reusable legal truth.</span>
+      </BottomBar>
+    </Scene>
+  );
+}
+
+function TeamTouchpointsGrid({ localTime }) {
+  const teams = [
+    { name: 'Deal team', question: 'Fund-level restrictions on investment, financing, or exit?', phase: 'Investment' },
+    { name: 'Investor Relations', question: 'Side letter rights, disclosure & reporting obligations?', phase: 'Reporting' },
+    { name: 'Finance / Ops', question: 'Legal preconditions for capital calls, distributions & consents?', phase: 'Fundraising' },
+    { name: 'GC / Fund Counsel', question: 'Risk basis, approval path & audit trail?', phase: 'Portfolio' },
+  ];
+  return (
+    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW, padding: '28px 32px 32px', ...fx(localTime, 0.25, 0.55, 14) }}>
+      <ColLabel>Legal touchpoints by team</ColLabel>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        {teams.map((t, i) => (
+          <div key={t.name} style={{ ...fx(localTime, 0.4 + i * 0.12, 0.45, 12), padding: '22px 24px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_CARD }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
+              <Chip tone="accent" style={{ fontSize: 12, padding: '5px 11px' }}>{t.name}</Chip>
+              <span style={{ fontFamily: MONO, fontSize: 11, color: INK_FAINT, whiteSpace: 'nowrap' }}>@ {t.phase}</span>
+            </div>
+            <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK, lineHeight: 1.45 }}>{t.question}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function S6_CrossTeam() {
+  const { localTime } = useSprite();
+  return (
+    <Scene>
+      <Eyebrow n="01 · E" label="Beyond Legal" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Not just a tool for the legal team.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Different people across the investment team all have legal touchpoints at critical moments.</div>
+      </div>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 188, bottom: 88, display: 'flex', alignItems: 'center' }}>
+        <TeamTouchpointsGrid localTime={localTime} />
+      </div>
+      <BottomBar localTime={localTime} delay={2.0}>
+        <span style={HI_INK}>Claude</span> is a personal / task-level assistant. <span style={HI_ACCENT}>Perry</span> is a fund-level legal operating system.
+      </BottomBar>
+    </Scene>
+  );
+}
+
+function DataFlywheel({ localTime }) {
+  const steps = [
+    { label: 'New transaction', sub: 'Documents · deal · amendment', angle: -90 },
+    { label: 'Informed review', sub: 'Prior context applied', angle: 0 },
+    { label: 'Capture outcomes', sub: 'Positions · consents · obligations', angle: 90 },
+    { label: 'Record compounds', sub: 'Memory grows with each matter', angle: 180 },
+  ];
+  const S = 1000;
+  const cx = S / 2;
+  const cy = S / 2;
+  const R = 372;
+  const ring = 2 * Math.PI * R;
+  const spin = (localTime * 0.12) % 1;
+
+  return (
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW, overflow: 'hidden', display: 'flex', alignItems: 'center', gap: 28, padding: '20px 24px 20px 16px', ...fx(localTime, 0.25, 0.55, 14) }}>
+      <div style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'relative', height: '100%', width: 'auto', maxWidth: '100%', aspectRatio: '1', flexShrink: 0 }}>
+          <svg viewBox={`0 0 ${S} ${S}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+            <circle cx={cx} cy={cy} r={R} fill="none" stroke={BORDER} strokeWidth="3" strokeDasharray="14 14" opacity="0.7" />
+            <circle
+              cx={cx} cy={cy} r={R}
+              fill="none" stroke={ACCENT} strokeWidth="3.5" strokeLinecap="round"
+              strokeDasharray={`${ring * 0.22} ${ring * 0.78}`}
+              strokeDashoffset={-ring * spin}
+              opacity="0.55"
+              transform={`rotate(-90 ${cx} ${cy})`}
+            />
+            {steps.map((s, i) => {
+              const a0 = (s.angle * Math.PI) / 180;
+              const a1 = a0 + Math.PI / 2;
+              const x1 = cx + Math.cos(a0) * (R - 22);
+              const y1 = cy + Math.sin(a0) * (R - 22);
+              const x2 = cx + Math.cos(a1) * (R - 22);
+              const y2 = cy + Math.sin(a1) * (R - 22);
+              const p = grow(localTime, 0.4 + i * 0.12, 0.5);
+              return (
+                <path
+                  key={s.label}
+                  d={`M ${x1} ${y1} A ${R - 22} ${R - 22} 0 0 1 ${x2} ${y2}`}
+                  fill="none" stroke={ACCENT} strokeWidth="2.5" opacity={0.2 + p * 0.25}
+                />
+              );
+            })}
+          </svg>
+
+          <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', zIndex: 3 }}>
+            <div style={{ ...fx(localTime, 0.45, 0.55, 10) }}>
+              <div style={{ width: 152, padding: '16px 14px', background: ACCENT, borderRadius: R_PANEL, boxShadow: '0 8px 28px rgba(0,156,127,.25)', textAlign: 'center' }}>
+                <div style={{ width: 32, height: 32, borderRadius: R_DOT, background: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 7px' }}>
+                  <PerryLogo height={15} />
+                </div>
+                <div style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 700, color: WHITE, lineHeight: 1.25 }}>Fund legal record</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.82)', marginTop: 3 }}>compounds each cycle</div>
+              </div>
+            </div>
+          </div>
+
+          {steps.map((s, i) => {
+            const ang = (s.angle * Math.PI) / 180;
+            const x = cx + Math.cos(ang) * R;
+            const y = cy + Math.sin(ang) * R;
             return (
-              <React.Fragment key={nlab}>
-                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
-                  <line x1="50%" y1="50%" x2={`${50 + (cx - 50) * p}%`} y2={`${50 + (cy - 50) * p}%`} stroke={ACCENT} strokeWidth="1.4" opacity="0.32" />
-                </svg>
-                <div style={{ position: 'absolute', left: `${cx}%`, top: `${cy}%`, transform: 'translate(-50%,-50%)', opacity: p, padding: '6px 11px', borderRadius: R_CTRL, background: '#FCFBF9', border: `1px solid ${ACCENT_BD}`, fontFamily: SANS, fontSize: 12.5, fontWeight: 500, color: INK, whiteSpace: 'nowrap', boxShadow: SHADOW_SM }}>{nlab}</div>
-              </React.Fragment>
+              <div
+                key={s.label}
+                style={{
+                  position: 'absolute',
+                  left: `${(x / S) * 100}%`,
+                  top: `${(y / S) * 100}%`,
+                  transform: 'translate(-50%, -50%)',
+                  width: '28%',
+                  zIndex: 2,
+                }}
+              >
+                <div style={{ ...fx(localTime, 0.5 + i * 0.12, 0.45, 10) }}>
+                  <div style={{ padding: '11px 12px', background: WHITE, border: `1px solid ${ACCENT_BD}`, borderRadius: R_CARD, boxShadow: SHADOW_SM, textAlign: 'center' }}>
+                    <div style={{ width: 22, height: 22, borderRadius: R_DOT, background: ACCENT_SOFT, border: `1px solid ${ACCENT_BD}`, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 6px', fontFamily: MONO, fontSize: 11, fontWeight: 700, color: ACCENT }}>{i + 1}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 700, color: INK, lineHeight: 1.25 }}>{s.label}</div>
+                    <div style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 500, color: INK_SOFT, marginTop: 3, lineHeight: 1.35 }}>{s.sub}</div>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>
-        <div style={{ marginTop: 15 }}>
-          <div style={{ ...fx(localTime, 2.0, 0.6, 8), fontFamily: SERIF, fontSize: 18, fontWeight: 600, color: INK }}>Preserves &amp; operationalizes legal context over time.</div>
-          <div style={{ ...fx(localTime, 2.35, 0.6, 8), marginTop: 8, fontFamily: SANS, fontSize: 14.5, fontWeight: 500, color: INK_SOFT, lineHeight: 1.4 }}>We support a range of large language models — not just Claude.</div>
-        </div>
       </div>
 
-      {/* Bottom takeaway */}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 40, display: 'flex', justifyContent: 'center', ...fx(localTime, 2.6, 0.7, 12) }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '13px 26px', background: INK, borderRadius: R_PILL, boxShadow: SHADOW }}>
-          <span style={{ fontFamily: SANS, fontSize: 16.5, fontWeight: 600, color: 'rgba(246,244,239,0.65)' }}>Task execution</span>
-          <span style={{ fontFamily: SERIF, fontSize: 15, fontStyle: 'italic', color: ACCENT }}>vs</span>
-          <span style={{ fontFamily: SANS, fontSize: 16.5, fontWeight: 700, color: '#F6F4EF' }}>a persistent system</span>
+      <div style={{ width: 248, flexShrink: 0, alignSelf: 'center', ...fx(localTime, 0.7, 0.55, 12) }}>
+        <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>What the flywheel means</div>
+        <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 600, color: INK, lineHeight: 1.35, letterSpacing: '-0.01em', marginBottom: 14 }}>
+          Every matter adds back to the fund record — not a one-off answer lost in chat.
+        </div>
+        <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: INK_SOFT, lineHeight: 1.5 }}>
+          The next review starts with prior positions, consents, and restrictions already in context. Each cycle makes the record <span style={HI_ACCENT}>more reliable</span> than the last.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function S7_InstitutionalMemory() {
+  const { localTime } = useSprite();
+  return (
+    <Scene>
+      <Eyebrow n="01 · F" label="Compounding Context" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Each transaction makes the next decision better.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry turns every review into data the fund can reuse — a flywheel, not a one-off answer.</div>
+      </div>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 178, bottom: 44, ...fx(localTime, 0.2, 0.5, 10) }}>
+        <DataFlywheel localTime={localTime} />
+      </div>
+    </Scene>
+  );
+}
+
+function S8_Arg1Close() {
+  const { localTime } = useSprite();
+  return (
+    <Scene fadeIn={0.6} fadeOut={0.5}>
+      <Eyebrow n="01" label="Argument 1 — Close" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 200, textAlign: 'center', ...fx(localTime, 0.2, 0.8, 20) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 600, color: INK, lineHeight: 1.12, letterSpacing: '-0.02em', maxWidth: 900, margin: '0 auto' }}>
+          Claude helps you do legal work.
+        </div>
+        <div style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 600, color: ACCENT, lineHeight: 1.12, letterSpacing: '-0.02em', maxWidth: 900, margin: '12px auto 0' }}>
+          Perry helps you run legal work as a fund.
+        </div>
+        <div style={{ ...fx(localTime, 0.8, 0.7, 14), marginTop: 32, fontFamily: SANS, fontSize: 18, fontWeight: 500, color: INK_SOFT, lineHeight: 1.5, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' }}>
+          With a schema, source links, and context that survives every matter.
         </div>
       </div>
     </Scene>
@@ -314,469 +883,381 @@ function S2_Distinction() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// SCENE 3 — WHAT CLAUDE ALREADY DOES
+// ARGUMENT 2 — WHY THIS CANNOT BE EASILY BUILT WITH CLAUDE CODE
 // ═══════════════════════════════════════════════════════════════════════════
-function S3_ClaudeDoes() {
-  const { localTime } = useSprite();
-  const inDocs = [['Fund LPA', 'PDF · 214 pp'], ['Amendment 02', 'PDF · 6 pp'], ['Side letter', 'PDF · 9 pp'], ['Board consent', 'PDF · 2 pp']];
-  const acts = ['Extract clauses', 'Identify risks', 'Compare versions', 'Summarize obligations'];
-  const outs = [['Word report', 'green'], ['Excel tracker', 'green'], ['Risk summary', 'amber'], ['Redline', 'accent']];
 
+function S9_Arg2Title() {
+  const { localTime } = useSprite();
   return (
     <Scene>
-      <Eyebrow n="02" label="What Claude Already Does" />
-      <div style={{ position: 'absolute', left: 64, top: 100, ...fx(localTime, 0.1, 0.6, 12) }}>
-        <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Documents in, legal work out.</div>
-      </div>
-
-      <div style={{ position: 'absolute', left: 64, top: 190, display: 'flex', alignItems: 'center', gap: 0 }}>
-        <div style={{ width: 268 }}>
-          <ColLabel>Source documents</ColLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {inDocs.map((d, i) => (
-              <div key={d[0]} style={fx(localTime, 0.4 + i * 0.13, 0.45, 12)}>
-                <DocCard title={d[0]} meta={d[1]} w={268} />
-              </div>
-            ))}
-          </div>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 48px' }}>
+        <div style={{ ...fx(localTime, 0.2, 0.7, 16), fontFamily: SANS, fontSize: 28, fontWeight: 500, color: INK_SOFT, lineHeight: 1.45, maxWidth: 880, textAlign: 'center' }}>
+          Claude Code can quickly build the <span style={HI_CLAUDE}>first 20% demo</span>. Perry's value lies in the remaining <span style={HI_ACCENT}>80%</span> of platform engineering and legal domain accumulation.
         </div>
-
-        <div style={{ padding: '0 6px' }}><FlowArrow length={78} localTime={localTime} delay={1.0} color={CLAUDE} /></div>
-
-        <div style={{ width: 232, ...fx(localTime, 1.1, 0.5, 12) }}>
-          <ColLabel>Claude</ColLabel>
-          <div style={{ padding: 18, background: CLAUDE_BG, border: `1px solid ${CLAUDE_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 14 }}>
-              <div style={{ width: 30, height: 30, borderRadius: R_CTRL, background: CLAUDE, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l1.7 4.4 4.8.3-3.7 3 1.2 4.6L8 11.4 3.9 13.8l1.2-4.6-3.7-3 4.8-.3L8 1.5z" fill={WHITE}/></svg>
-              </div>
-              <span style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: CLAUDE_INK }}>Legal Skill</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {acts.map((a, i) => {
-                const done = grow(localTime, 1.5 + i * 0.22, 0.4) > 0.9;
-                return (
-                  <div key={a} style={{ ...fx(localTime, 1.4 + i * 0.15, 0.4, 8), display: 'flex', alignItems: 'center', gap: 9, padding: '8px 10px', background: WHITE, borderRadius: R_CTRL, border: `1px solid ${CLAUDE_BD}` }}>
-                    <span style={{ width: 15, height: 15, borderRadius: R_DOT, background: done ? CLAUDE : '#E8E6DC', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      {done && <svg width="9" height="9" viewBox="0 0 10 10"><path d="M2 5l2 2 4-4.5" stroke={WHITE} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                    </span>
-                    <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 500, color: CLAUDE_INK }}>{a}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ padding: '0 6px' }}><FlowArrow length={78} localTime={localTime} delay={2.4} color={CLAUDE} /></div>
-
-        <div style={{ width: 250, ...fx(localTime, 2.5, 0.5, 12) }}>
-          <ColLabel>Legal output</ColLabel>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {outs.map((o, i) => (
-              <div key={o[0]} style={{ ...fx(localTime, 2.7 + i * 0.14, 0.45, 12), display: 'flex', alignItems: 'center', gap: 11, padding: '13px 15px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_CARD, boxShadow: SHADOW_SM }}>
-                <span style={{ width: 30, height: 30, borderRadius: R_CTRL, background: o[1] === 'green' ? GREEN_SOFT : o[1] === 'amber' ? AMBER_SOFT : ACCENT_SOFT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Dot color={o[1] === 'green' ? GREEN : o[1] === 'amber' ? AMBER : ACCENT} size={9} />
-                </span>
-                <span style={{ fontFamily: SANS, fontSize: 14, fontWeight: 600, color: INK }}>{o[0]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ position: 'absolute', left: 64, right: 64, bottom: 44, ...fx(localTime, 3.4, 0.7, 10), display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ width: 26, height: 26, borderRadius: R_DOT, background: ACCENT_SOFT, border: `1px solid ${ACCENT_BD}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: SERIF, fontSize: 15, color: ACCENT, fontWeight: 700 }}>i</span>
-        <span style={{ fontFamily: SANS, fontSize: 16, color: INK_SOFT, fontWeight: 500 }}>Many advanced legal tasks can already be performed <span style={{ color: INK, fontWeight: 600 }}>without a dedicated vertical platform.</span></span>
       </div>
     </Scene>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENE 4a — WHAT PERRY MAY ADD (Acme Ltd entity)
-// ═══════════════════════════════════════════════════════════════════════════
-function S4_PerryAdds() {
+function S10_Demo() {
   const { localTime } = useSprite();
-  const tabs = ['Overview', 'Documents', 'Rights', 'Obligations', 'Timeline', 'Sources'];
-  const metrics = [['Related documents', 84], ['Stakeholders', 12], ['Financing rounds', 4], ['Investor rights', 17], ['Active obligations', 9]];
-  const timeline = [['2024 Q1', 'First close', GREEN], ['2024 Q3', 'Amendment 01', ACCENT], ['2024 Q4', 'Investor admission', GREEN], ['2025 Q1', 'Board consent', ACCENT], ['2025 Q2', 'Amendment 02 · in review', AMBER]];
-  const sources = ['LPA.pdf · Section 8.4', 'Side Letter – Investor A · Clause 12', 'Amendment 02 · Page 6', 'Board Consent · 14 Mar 2025'];
+  const demo = ['Upload an LPA', 'Extract clauses', 'Generate a report', 'Build a simple Q&A interface'];
+  const product = ['Ingestion pipeline', 'Entity resolution', 'Schema evolution', 'Permission & audit', 'Regression testing'];
+  const rowCount = Math.max(demo.length, product.length);
+  const rowStyle = { minHeight: 44, display: 'flex', alignItems: 'center', padding: '0 18px', borderTop: `1px solid ${BORDER}` };
 
   return (
     <Scene>
-      <Eyebrow n="03 · A" label="Perry — Long-Term Fund Data" />
-      <div style={{ position: 'absolute', left: 64, top: 96, display: 'flex', alignItems: 'baseline', gap: 14, ...fx(localTime, 0.1, 0.6, 12) }}>
-        <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK }}>Data stored around an entity —</div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT }}>
-          not left inside disconnected documents.{' '}
-          <span style={{ background: AMBER_SOFT, color: AMBER, fontWeight: 700, padding: '2px 8px', borderRadius: R_MIN, border: `1px solid ${AMBER_BD}`, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>and (messy context window)</span>
-        </div>
+      <Eyebrow n="02 · A" label="Demo vs Product" />
+      <div style={{ position: 'absolute', left: 96, right: 96, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK }}>They could build a demo in a few weeks.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>A demo solves "it looks like it works." A product solves "can a GC rely on it over the long term?"</div>
       </div>
 
-      <div style={{ position: 'absolute', left: 64, top: 150, width: 760, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW, overflow: 'hidden', ...fx(localTime, 0.3, 0.6, 16) }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 15, padding: '18px 22px', borderBottom: `1px solid ${BORDER}` }}>
-          <div style={{ width: 46, height: 46, borderRadius: R_CARD, background: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: 21, fontWeight: 700, color: WHITE, flexShrink: 0 }}>A</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontFamily: SANS, fontSize: 20, fontWeight: 700, color: INK }}>Acme Ltd</div>
-            <div style={{ fontFamily: MONO, fontSize: 12, color: INK_FAINT, marginTop: 2 }}>Fund entity · time frame 2024 Q1 – 2025 Q2</div>
+      <div style={{ position: 'absolute', left: 96, right: 96, top: 168, bottom: 72, display: 'flex', flexDirection: 'column', justifyContent: 'center', ...fx(localTime, 0.2, 0.55, 14) }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '20% 1fr', borderRadius: R_PANEL, overflow: 'hidden', border: `1px solid ${BORDER}`, boxShadow: SHADOW_SM, flexShrink: 0 }}>
+          <div style={{ background: CLAUDE_BG, borderRight: `1px solid ${CLAUDE_BD}`, padding: '12px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', ...fx(localTime, 0.35, 0.45, 8) }}>
+            <span style={{ fontFamily: MONO, fontSize: 17, fontWeight: 700, color: CLAUDE }}>~20%</span>
+            <span style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: CLAUDE_INK, marginTop: 2 }}>Weeks 1–3</span>
           </div>
-          <Chip tone="green" style={{ fontSize: 12 }}><Dot color={GREEN} /> Live record</Chip>
-        </div>
-        <div style={{ display: 'flex', gap: 4, padding: '10px 18px', borderBottom: `1px solid ${BORDER}`, background: '#FCFBF9' }}>
-          {tabs.map((t, i) => (
-            <div key={t} style={{ ...fx(localTime, 0.7 + i * 0.06, 0.35, 6), padding: '7px 13px', borderRadius: R_CTRL, background: i === 0 ? ACCENT_SOFT : 'transparent', color: i === 0 ? ACCENT : INK_FAINT, fontFamily: SANS, fontSize: 13, fontWeight: i === 0 ? 600 : 500 }}>{t}</div>
+          <div style={{ background: ACCENT_SOFT, padding: '12px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', ...fx(localTime, 0.45, 0.45, 8) }}>
+            <span style={{ fontFamily: MONO, fontSize: 17, fontWeight: 700, color: ACCENT }}>~80%</span>
+            <span style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: INK, marginTop: 2 }}>Years of product iteration</span>
+          </div>
+
+          <div style={{ background: CLAUDE_BG, borderRight: `1px solid ${CLAUDE_BD}`, borderTop: `1px solid ${BORDER}`, minHeight: 52, display: 'flex', alignItems: 'center', padding: '0 18px', ...fx(localTime, 0.35, 0.6, 16) }}>
+            <Chip tone="claude">Reasonable demo</Chip>
+          </div>
+          <div style={{ background: WHITE, borderTop: `1px solid ${BORDER}`, minHeight: 52, display: 'flex', alignItems: 'center', gap: 10, padding: '0 18px', ...fx(localTime, 0.5, 0.6, 16) }}>
+            <PerryLogo height={18} />
+            <Chip tone="accent">Platform engineering gap</Chip>
+          </div>
+
+          {Array.from({ length: rowCount }, (_, i) => (
+            <React.Fragment key={i}>
+              <div style={{ ...rowStyle, background: CLAUDE_BG, borderRight: `1px solid ${CLAUDE_BD}`, borderTopColor: CLAUDE_BD, gap: 10 }}>
+                {demo[i] && (
+                  <>
+                    <span style={{ width: 18, height: 18, borderRadius: R_DOT, background: WHITE, border: `1px solid ${GREEN_BD}`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: GREEN, fontWeight: 700, fontSize: 10, flexShrink: 0 }}>✓</span>
+                    <span style={{ ...fx(localTime, 0.55 + i * 0.1, 0.4, 8), fontFamily: SANS, fontSize: 13, fontWeight: 500, color: CLAUDE_INK, lineHeight: 1.35 }}>{demo[i]}</span>
+                  </>
+                )}
+              </div>
+              <div style={{ ...rowStyle, background: WHITE, gap: 12 }}>
+                {product[i] && (
+                  <>
+                    <span style={{ width: 6, height: 6, borderRadius: R_DOT, background: ACCENT, flexShrink: 0 }} />
+                    <span style={{ ...fx(localTime, 0.65 + i * 0.08, 0.35, 6), fontFamily: SANS, fontSize: 13, fontWeight: 500, color: INK, lineHeight: 1.35 }}>{product[i]}</span>
+                  </>
+                )}
+              </div>
+            </React.Fragment>
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, padding: '20px 18px' }}>
-          {metrics.map((m, i) => (
-            <div key={m[0]} style={{ ...fx(localTime, 1.0 + i * 0.13, 0.5, 14), padding: '14px 14px', background: '#FCFBF9', border: `1px solid ${BORDER}`, borderRadius: R_CARD }}>
-              <div style={{ fontFamily: SERIF, fontSize: 34, fontWeight: 700, color: INK, lineHeight: 1 }}>{countUp(localTime, 1.0 + i * 0.13, 0.9, m[1])}</div>
-              <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 500, color: INK_SOFT, marginTop: 7, lineHeight: 1.25 }}>{m[0]}</div>
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: '4px 18px 20px' }}>
-          <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 12 }}>Timeline of changes</div>
-          <div style={{ position: 'relative', display: 'flex', justifyContent: 'space-between' }}>
-            <div style={{ position: 'absolute', left: 8, right: 8, top: 5, height: 2, background: BORDER }} />
-            <div style={{ position: 'absolute', left: 8, top: 5, height: 2, background: ACCENT, width: `${grow(localTime, 1.9, 1.2) * 92}%`, opacity: 0.6 }} />
-            {timeline.map((tl, i) => (
-              <div key={i} style={{ ...fx(localTime, 2.0 + i * 0.16, 0.4, 8), position: 'relative', width: 130, textAlign: 'center' }}>
-                <div style={{ width: 12, height: 12, borderRadius: R_DOT, background: tl[2], border: `2px solid ${WHITE}`, margin: '0 auto 9px', boxShadow: `0 0 0 1px ${tl[2]}44` }} />
-                <div style={{ fontFamily: MONO, fontSize: 11, color: INK_FAINT }}>{tl[0]}</div>
-                <div style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 600, color: INK, marginTop: 3, lineHeight: 1.2 }}>{tl[1]}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ position: 'absolute', left: 856, top: 150, width: 360, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div style={{ ...fx(localTime, 1.4, 0.6, 16), padding: 18, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW_SM }}>
-          <div style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK, marginBottom: 4 }}>Every metric links to a source</div>
-          <div style={{ fontFamily: SANS, fontSize: 12, color: INK_FAINT, marginBottom: 14 }}>Investor rights · 17 — traced to:</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-            {sources.map((s, i) => (
-              <div key={s} style={{ ...fx(localTime, 2.0 + i * 0.18, 0.45, 8), display: 'flex', alignItems: 'center', gap: 9 }}>
-                <DocIcon w={13} />
-                <SourceRef>{s}</SourceRef>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div style={{ ...fx(localTime, 3.2, 0.6, 16), padding: 18, background: INK, borderRadius: R_PANEL, boxShadow: SHADOW }}>
-          <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 600, color: '#F6F4EF', lineHeight: 1.4 }}>The context survives the matter.</div>
-          <div style={{ fontFamily: SANS, fontSize: 13, color: 'rgba(246,244,239,0.6)', marginTop: 7, lineHeight: 1.45 }}>Close the task in Claude and the record is gone. Here it keeps accruing.</div>
-        </div>
       </div>
     </Scene>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENE 4b — PERRY: ACTIVITY & GOVERNANCE TRACKING
-// ═══════════════════════════════════════════════════════════════════════════
-function S4b_Activity() {
-  const { localTime } = useSprite();
-  const rows = [
-    ['First close', 'Legal Ops', '12 Feb 2024', 'Completed', 'green'],
-    ['Subsequent close', 'Fund Counsel', '30 Sep 2024', 'Completed', 'green'],
-    ['Investor admission', 'Legal Ops', 'Q4 2024', 'In progress', 'accent'],
-    ['Board consent', 'General Counsel', '14 Mar 2025', 'Completed', 'green'],
-    ['LPAC approval', 'External Counsel', 'Due 22 Jun', 'Pending', 'amber'],
-    ['Amendment 02 execution', 'General Counsel', 'Due 10 Jun', 'Overdue', 'red'],
-    ['Annual reporting', 'Investor Relations', 'Due 30 Jun', 'In progress', 'accent'],
+function RagPromptsIllustration({ localTime }) {
+  const docs = [
+    { label: 'Fund LPA.pdf', top: '6%', left: '6%' },
+    { label: 'Side letter', top: '24%', left: '48%' },
+    { label: 'Amendment 02', top: '42%', left: '14%' },
+    { label: 'Board consent', top: '58%', left: '44%' },
   ];
-  const feed = [
-    ['Perry', 'ai', 'Clause extracted', 'LPA · §8.4', '2m'],
-    ['Legal Ops', 'person', 'Entity match corrected', 'Acme Ltd', '6m'],
-    ['Perry', 'ai', 'Obligation updated', '66% → 75%', '14m'],
-    ['G. Counsel', 'person', 'Approval granted', 'Board consent', '1h'],
-    ['System', 'system', 'Data exported', 'CSV + source links', '2h'],
-  ];
-  const avColor = { ai: ACCENT, person: INK, system: AMBER };
-  const tableCols = '280px 176px 112px 136px';
-  const headCell = { padding: '12px 18px', borderBottom: `1px solid ${BORDER}`, background: '#FCFBF9', display: 'flex', alignItems: 'center' };
-  const bodyCell = { padding: '11px 18px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center' };
-
   return (
-    <Scene>
-      <Eyebrow n="03 · B" label="Perry — Governance &amp; Activity" />
-      <div style={{ position: 'absolute', left: 64, top: 96, display: 'flex', alignItems: 'baseline', gap: 14, ...fx(localTime, 0.1, 0.6, 12) }}>
-        <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK }}>Closings, consents &amp; obligations —</div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT }}>tracked continuously, with a full audit trail.</div>
+    <div style={{ position: 'absolute', inset: 0, padding: 22 }}>
+      <div style={{ ...fx(localTime, 0.25, 0.45, 8), padding: '10px 14px', background: WHITE, border: `1px solid ${CLAUDE_BD}`, borderRadius: R_PILL, display: 'flex', alignItems: 'center', gap: 10, boxShadow: SHADOW_SM }}>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+          <circle cx="7" cy="7" r="4.5" stroke={INK_FAINT} strokeWidth="1.4" />
+          <path d="M10.5 10.5L14 14" stroke={INK_FAINT} strokeWidth="1.4" strokeLinecap="round" />
+        </svg>
+        <span style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 500, color: INK_FAINT }}>Search fund documents…</span>
       </div>
-
-      <div style={{ position: 'absolute', left: 64, top: 150, width: 704, display: 'flex', flexDirection: 'column', gap: 12, ...fx(localTime, 0.3, 0.6, 16) }}>
-        {/* Governance matter list */}
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: tableCols }}>
-            {['Matter', 'Owner', 'Due', 'Status'].map((h, idx) => (
-              <div key={h} style={{ ...headCell, fontFamily: SANS, fontSize: 11, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.08em', textTransform: 'uppercase', justifyContent: idx === 3 ? 'flex-end' : 'flex-start' }}>{h}</div>
-            ))}
-            {rows.map((r, i) => (
-              <React.Fragment key={r[0]}>
-                <div style={{ ...bodyCell, ...(i < rows.length - 1 ? {} : { borderBottom: 'none' }) }}>
-                  <div style={{ ...fx(localTime, 0.6 + i * 0.13, 0.4, 8), fontFamily: SANS, fontSize: 14, fontWeight: 600, color: INK }}>{r[0]}</div>
-                </div>
-                <div style={{ ...bodyCell, ...(i < rows.length - 1 ? {} : { borderBottom: 'none' }) }}>
-                  <div style={{ ...fx(localTime, 0.6 + i * 0.13, 0.4, 8), fontFamily: SANS, fontSize: 12.5, fontWeight: 500, color: INK_SOFT }}>{r[1]}</div>
-                </div>
-                <div style={{ ...bodyCell, ...(i < rows.length - 1 ? {} : { borderBottom: 'none' }) }}>
-                  <div style={{ ...fx(localTime, 0.6 + i * 0.13, 0.4, 8), fontFamily: MONO, fontSize: 11.5, color: r[4] === 'red' ? RED : INK_FAINT }}>{r[2]}</div>
-                </div>
-                <div style={{ ...bodyCell, justifyContent: 'flex-end', ...(i < rows.length - 1 ? {} : { borderBottom: 'none' }) }}>
-                  <div style={fx(localTime, 0.6 + i * 0.13, 0.4, 8)}><StatusPill label={r[3]} tone={r[4]} /></div>
-                </div>
-              </React.Fragment>
-            ))}
+      <div style={{ position: 'relative', marginTop: 16, height: 'calc(100% - 52px)' }}>
+        {docs.map((d, i) => (
+          <div key={d.label} style={{ ...fx(localTime, 0.35 + i * 0.1, 0.4, 8), position: 'absolute', top: d.top, left: d.left, padding: '8px 11px', background: WHITE, border: `1px solid ${i === 0 ? CLAUDE_BD : BORDER}`, borderRadius: R_CTRL, boxShadow: SHADOW_SM, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <DocIcon w={11} color={CLAUDE} />
+            <span style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: INK, whiteSpace: 'nowrap' }}>{d.label}</span>
           </div>
+        ))}
+        <div style={{ ...fx(localTime, 0.8, 0.45, 10), position: 'absolute', left: 0, right: 0, bottom: 0, padding: '12px 14px', background: WHITE, border: `1px dashed ${CLAUDE_BD}`, borderRadius: R_CARD }}>
+          <div style={{ fontFamily: MONO, fontSize: 9.5, color: CLAUDE, fontWeight: 600 }}>Chunks retrieved · answer regenerated</div>
+          <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 500, color: INK_SOFT, marginTop: 5, lineHeight: 1.45 }}>No governed schema · no persistent record</div>
         </div>
+      </div>
+    </div>
+  );
+}
 
-        {/* Dependency callout */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', background: AMBER_SOFT, border: `1px solid ${AMBER_BD}`, borderRadius: R_CARD }}>
-          <div style={{ flexShrink: 0, ...fx(localTime, 1.9, 0.6, 0) }}>
-            <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-              <rect x="1" y="1" width="32" height="32" rx="9" fill={WHITE} stroke={AMBER_BD} />
-              <path d="M11 12v6a2 2 0 002 2h9m0 0l-3-3m3 3l-3 3" stroke={AMBER} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+function FundRecordIllustration({ localTime }) {
+  const modules = [
+    { label: 'Entities', x: 50, y: 20 },
+    { label: 'Rights', x: 80, y: 38 },
+    { label: 'Obligations', x: 80, y: 66 },
+    { label: 'Consents', x: 50, y: 84 },
+    { label: 'Timeline', x: 20, y: 66 },
+    { label: 'Documents', x: 20, y: 38 },
+  ];
+  return (
+    <div style={{ position: 'absolute', inset: 0 }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ ...fx(localTime, 0.45, 0.5, 0), padding: '10px 16px', borderRadius: R_BOX, background: ACCENT, color: WHITE, fontFamily: SANS, fontSize: 13, fontWeight: 700, boxShadow: '0 6px 18px rgba(0,156,127,.22)' }}>Acme Fund</div>
+      </div>
+      {modules.map((m, i) => {
+        const p = grow(localTime, 0.55 + i * 0.08, 0.45);
+        return (
+          <React.Fragment key={m.label}>
+            <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+              <line x1="50%" y1="50%" x2={`${50 + (m.x - 50) * p}%`} y2={`${50 + (m.y - 50) * p}%`} stroke={ACCENT} strokeWidth="1.2" opacity="0.28" />
             </svg>
-          </div>
-          <div style={fx(localTime, 1.9, 0.6, 12)}>
-            <div style={{ fontFamily: SANS, fontSize: 11, fontWeight: 600, color: AMBER, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Dependency</div>
-            <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 500, color: INK, lineHeight: 1.35 }}>Amendment execution can't proceed until <span style={{ fontWeight: 700 }}>LPAC consent</span> reaches the required threshold.</div>
-          </div>
-        </div>
+            <div style={{ position: 'absolute', left: `${m.x}%`, top: `${m.y}%`, transform: 'translate(-50%, -50%)', opacity: p, padding: '5px 9px', borderRadius: R_MIN, background: WHITE, border: `1px solid ${ACCENT_BD}`, fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: INK, whiteSpace: 'nowrap', boxShadow: SHADOW_SM }}>{m.label}</div>
+          </React.Fragment>
+        );
+      })}
+      <div style={{ position: 'absolute', left: 16, right: 16, bottom: 16, display: 'flex', justifyContent: 'center', gap: 6, flexWrap: 'wrap', ...fx(localTime, 0.95, 0.45, 8) }}>
+        {['Entity', 'Right', 'Obligation', 'Consent', 'Timeline'].map((o) => (
+          <span key={o} style={{ padding: '4px 9px', borderRadius: R_PILL, background: ACCENT_SOFT, border: `1px solid ${ACCENT_BD}`, fontFamily: SANS, fontSize: 10, fontWeight: 600, color: INK }}>{o}</span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function S11_NotRAG() {
+  const { localTime } = useSprite();
+  return (
+    <Scene>
+      <Eyebrow n="02 · B" label="Not RAG + Prompts" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK }}>Fund legal work is not unstructured Q&A.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>It's an operating system with fixed objects and relationships — they don't emerge from "adding a legal skill."</div>
       </div>
 
-      {/* Activity feed */}
-      <div style={{ position: 'absolute', left: 800, top: 150, width: 392, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: R_PANEL, boxShadow: SHADOW, overflow: 'hidden', ...fx(localTime, 0.5, 0.6, 16) }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: `1px solid ${BORDER}`, background: '#FCFBF9' }}>
-          <span style={{ fontFamily: SANS, fontSize: 13.5, fontWeight: 700, color: INK }}>Activity &amp; audit trail</span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 11, color: GREEN }}><Dot color={GREEN} size={6} /> live</span>
-        </div>
-        <div style={{ padding: '6px 0' }}>
-          {feed.map((f, i) => (
-            <div key={i} style={{ ...fx(localTime, 1.3 + i * 0.28, 0.45, 12), display: 'flex', gap: 12, padding: '13px 18px', borderBottom: i < feed.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
-              <div style={{ width: 30, height: 30, borderRadius: R_CTRL, background: f[1] === 'ai' ? ACCENT_SOFT : f[1] === 'system' ? AMBER_SOFT : '#F3F1EB', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: SANS, fontSize: 11, fontWeight: 700, color: avColor[f[1]] }}>
-                {f[1] === 'ai' ? '✳' : f[1] === 'system' ? '⚙' : f[0].slice(0, 2).toUpperCase()}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                  <span style={{ fontFamily: SANS, fontSize: 13, fontWeight: 600, color: INK }}>{f[0]}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 10.5, color: INK_FAINT, flexShrink: 0 }}>{f[4]} ago</span>
-                </div>
-                <div style={{ fontFamily: SANS, fontSize: 12.5, fontWeight: 500, color: INK_SOFT, marginTop: 2 }}>{f[2]}</div>
-                <div style={{ fontFamily: MONO, fontSize: 11, color: '#8E8778', marginTop: 4 }}>{f[3]}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 188, bottom: 88, display: 'flex', gap: 36, alignItems: 'stretch' }}>
+        <TrustPillar
+          title="RAG + legal prompts"
+          body="A search box over a document library — answers assembled from retrieved chunks."
+          localTime={localTime}
+          delay={0.3}
+        >
+          <RagPromptsIllustration localTime={localTime} />
+        </TrustPillar>
+        <TrustPillar
+          title="Fund legal operating system"
+          body="Fixed objects and relationships in a governed record — source-linked and persistent."
+          localTime={localTime}
+          delay={0.45}
+        >
+          <FundRecordIllustration localTime={localTime} />
+        </TrustPillar>
       </div>
+
+      <BottomBar localTime={localTime} delay={2.0}>
+        Perry's fund context comes from <span style={HI_ACCENT}>domain model + engineering + legal QA</span> — not prompt engineering.
+      </BottomBar>
     </Scene>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENE 4c — PERRY: LEGAL QUESTIONS ACROSS TEAMS INSIDE THE FUND
-// ═══════════════════════════════════════════════════════════════════════════
-function S4c_Unified() {
+function S12_AccuracySystem() {
   const { localTime } = useSprite();
-  const teams = [
-    ['Legal Ops', 'What documents are needed for investor admission?'],
-    ['Fund Counsel', 'Does this amendment trigger LPAC consent?'],
-    ['Investor Relations', 'What quarterly reporting obligations are due?'],
-    ['General Counsel', 'Which investor rights changed after Amendment 02?'],
-    ['Tax & Compliance', 'Are we aligned with regulatory filing deadlines?'],
+  const checks = [
+    ['Source link on every answer', 'LPA §8.4 → obligation field'],
+    ['Human / legal engineer review', 'Customized rules executed correctly'],
+    ['Corrections written back', '66% → 75% persisted in record'],
+    ['Judgment reused next time', 'Similar question inherits prior fix'],
   ];
-
   return (
     <Scene>
-      <Eyebrow n="03 · C" label="Perry — Legal Work Across Teams" />
-      <div style={{ position: 'absolute', left: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
-        <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Different teams, different legal questions.</div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>All routed through one fund record.</div>
+      <Eyebrow n="02 · C" label="Accuracy Is a System" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK }}>Accuracy can't be solved by switching to a stronger model.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry needs every run to make the record more reliable — not regenerate from scratch.</div>
       </div>
 
-      {/* Unified panel — team questions + fund record rail */}
-      <div style={{ position: 'absolute', left: 64, top: 168, width: 1152, display: 'flex', borderRadius: R_PANEL, overflow: 'hidden', border: `1px solid ${BORDER}`, boxShadow: SHADOW, ...fx(localTime, 0.25, 0.65, 16) }}>
-        {/* Team questions */}
-        <div style={{ flex: 1, background: WHITE, minWidth: 0 }}>
-          <div style={{ padding: '18px 28px 14px', borderBottom: `1px solid ${BORDER}`, background: '#FCFBF9' }}>
-            <ColLabel>Teams inside the fund</ColLabel>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 168, bottom: 44, display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {/* top — contrast */}
+        <div style={{ ...fx(localTime, 0.25, 0.5, 10), padding: '16px 22px', background: CLAUDE_BG, border: `1px solid ${CLAUDE_BD}`, borderRadius: R_CARD, display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Chip tone="claude" style={{ flexShrink: 0 }}>Claude Code projects</Chip>
+          <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_SOFT }}>
+            Usually stop at <span style={HI_CLAUDE}>regenerate on every run</span> — no persistent improvement.
           </div>
-          {teams.map((tp, i) => (
-            <div
-              key={tp[0]}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 20,
-                padding: '0 28px',
-                minHeight: 72,
-                background: i % 2 === 0 ? WHITE : '#FCFBF9',
-                borderBottom: i < teams.length - 1 ? `1px solid ${BORDER}` : 'none',
-              }}
-            >
-              <div style={{ width: 152, flexShrink: 0, ...fx(localTime, 0.45 + i * 0.1, 0.45, 10) }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', padding: '7px 12px', borderRadius: R_PILL, background: ACCENT_SOFT, color: ACCENT, border: `1px solid ${ACCENT_BD}`, fontFamily: SANS, fontSize: 12.5, fontWeight: 600, whiteSpace: 'nowrap' }}>{tp[0]}</span>
+        </div>
+
+        {/* bottom — Perry wrapper with all reasonings */}
+        <div style={{ flex: 1, padding: '18px 22px 20px', background: WHITE, border: `1.5px solid ${ACCENT_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW, display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden', ...fx(localTime, 0.4, 0.55, 14) }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${ACCENT_BD}`, flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <PerryLogo height={20} />
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 10, fontWeight: 600, color: ACCENT, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Perry needs to achieve</div>
+                <div style={{ fontFamily: SERIF, fontSize: 22, fontWeight: 600, color: INK, lineHeight: 1.25, marginTop: 4, letterSpacing: '-0.01em' }}>Every run makes the record more reliable.</div>
               </div>
-              <div style={{ flex: 1, minWidth: 0, ...fx(localTime, 0.55 + i * 0.1, 0.45, 10) }}>
-                <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 500, color: INK, lineHeight: 1.4 }}>{tp[1]}</div>
+            </div>
+            <Chip tone="accent" style={{ flexShrink: 0 }}>System-level accuracy</Chip>
+          </div>
+
+          <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>How accuracy is built into the product</div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 0, justifyContent: 'flex-start' }}>
+            {checks.map((c, i) => {
+              const done = grow(localTime, 0.55 + i * 0.14, 0.4) > 0.85;
+              return (
+                <div key={c[0]} style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: done ? ACCENT_SOFT : WHITE, border: `1px solid ${done ? ACCENT_BD : BORDER}`, borderRadius: R_CARD, opacity: clamp((localTime - (0.5 + i * 0.1)) / 0.4, 0, 1) }}>
+                  <span style={{ width: 22, height: 22, borderRadius: R_DOT, background: done ? ACCENT : WHITE, border: `1.5px solid ${done ? ACCENT : BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {done
+                      ? <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2 2 4-4.5" stroke={WHITE} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      : <span style={{ fontFamily: MONO, fontSize: 10, fontWeight: 700, color: INK_FAINT }}>{i + 1}</span>}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: SANS, fontSize: 13.5, fontWeight: 600, color: INK, lineHeight: 1.25 }}>{c[0]}</div>
+                    <div style={{ fontFamily: MONO, fontSize: 10.5, color: INK_FAINT, marginTop: 2 }}>{c[1]}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </Scene>
+  );
+}
+
+function S13_LegalEngineer() {
+  const { localTime } = useSprite();
+  const reviews = [
+    'Whether customized rules reflect the fund\'s interests and risk preferences',
+    'Whether the prompt expresses the legal issue, business objective, and fund context',
+    'Whether the output misses key caveats, exceptions, consents, or dependencies',
+    'Whether the review conclusion aligns with the fund\'s best interests',
+    'Whether output quality reaches the standard required for legal review reliance',
+  ];
+  return (
+    <Scene>
+      <Eyebrow n="02 · D" label="Legal Engineer QA" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK }}>Legal engineer review is part of the product.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry places model outputs inside a legal QA workflow — not just wrapping Claude in a UI.</div>
+      </div>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 168, bottom: 44, display: 'flex', flexDirection: 'column', ...fx(localTime, 0.3, 0.6, 16) }}>
+        <div style={{ padding: '18px 22px 16px', background: WHITE, border: `1.5px solid ${ACCENT_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, paddingBottom: 14, borderBottom: `1px solid ${BORDER}` }}>
+            <PerryLogo height={20} />
+            <div>
+              <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 700, color: INK }}>Legal engineers evaluate</div>
+              <div style={{ fontFamily: MONO, fontSize: 10.5, color: INK_FAINT, marginTop: 2 }}>Rules · prompts · outputs</div>
+            </div>
+            <Chip tone="green" style={{ marginLeft: 'auto' }}>Approved</Chip>
+          </div>
+          {reviews.map((r, i) => {
+            const done = grow(localTime, 0.7 + i * 0.18, 0.4) > 0.85;
+            return (
+              <div key={r} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 0', borderBottom: i < reviews.length - 1 ? `1px solid ${BORDER}` : 'none', opacity: clamp((localTime - (0.55 + i * 0.12)) / 0.4, 0, 1) }}>
+                <span style={{ width: 20, height: 20, borderRadius: R_DOT, background: done ? GREEN_SOFT : MUTED, border: `1px solid ${done ? GREEN_BD : BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                  {done && <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5l2 2 4-4.5" stroke={GREEN} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                </span>
+                <span style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: INK, lineHeight: 1.4 }}>{r}</span>
               </div>
-              <div style={{ width: 108, flexShrink: 0, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                <FlowArrow length={96} localTime={localTime} delay={0.9 + i * 0.1} />
-              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Scene>
+  );
+}
+
+function S14_RealCost() {
+  const { localTime } = useSprite();
+  const maintains = [
+    'Who evolves the fund schema when new document types and fields appear?',
+    'Who triages the edge cases that only surface in live deals?',
+    'Who reruns regression every time the model or pipeline changes?',
+    'Who holds output quality to legal-review reliance standards?',
+    'Who revalidates workflows after each model upgrade?',
+    'Who maintains the exceptions the first demo never modeled?',
+    'Who updates ingestion when fund documents change shape?',
+    'Who keeps permissions, audit logs, and access controls current?',
+  ];
+  return (
+    <Scene fadeIn={0.55} fadeOut={0.5}>
+      <Eyebrow n="02 · E" label="The Real Cost" />
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
+        <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK }}>The question isn't whether you can build it.</div>
+        <div style={{ fontFamily: SANS, fontSize: 16, fontWeight: 500, color: INK_SOFT, marginTop: 8 }}>It's whether you are prepared to <span style={HI_ACCENT}>maintain it forever.</span></div>
+      </div>
+      <div style={{ position: 'absolute', left: 64, right: 64, top: 188, bottom: 44, display: 'flex', flexDirection: 'column', ...fx(localTime, 0.35, 0.6, 16) }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {maintains.map((m, i) => (
+            <div key={m} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '11px 0', borderBottom: i < maintains.length - 1 ? `1px solid ${BORDER}` : 'none', opacity: clamp((localTime - (0.5 + i * 0.1)) / 0.4, 0, 1) }}>
+              <span style={{ width: 22, height: 22, borderRadius: R_DOT, background: AMBER_SOFT, border: `1px solid ${AMBER_BD}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 700, color: AMBER }}>?</span>
+              <span style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK, lineHeight: 1.45 }}>{m}</span>
             </div>
           ))}
         </div>
-
-        {/* Fund record rail */}
-        <div style={{ width: 236, flexShrink: 0, background: ACCENT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 24px', position: 'relative' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(255,255,255,0.14) 0%, transparent 55%)', pointerEvents: 'none' }} />
-          <div style={{ ...fx(localTime, 0.85, 0.65, 0), position: 'relative', textAlign: 'center' }}>
-            <PerryLogo height={36} style={{ margin: '0 auto 16px' }} />
-            <div style={{ fontFamily: SANS, fontSize: 18, fontWeight: 700, color: WHITE, letterSpacing: '-0.01em' }}>Acme Ltd</div>
-            <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.82)', marginTop: 6, letterSpacing: '0.04em' }}>one fund record</div>
-            <div style={{ marginTop: 22, padding: '10px 14px', borderRadius: R_BOX, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)' }}>
-              <div style={{ fontFamily: SANS, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.95)', lineHeight: 1.45 }}>5 teams</div>
-              <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 500, color: 'rgba(255,255,255,0.72)', marginTop: 4, lineHeight: 1.4 }}>One shared legal context</div>
-            </div>
-          </div>
-          {(() => {
-            const pr = (localTime * 0.45) % 1;
-            return <div style={{ position: 'absolute', inset: 16, borderRadius: R_BOX, border: '1.5px solid rgba(255,255,255,0.28)', opacity: (1 - pr) * 0.55, transform: `scale(${1 + pr * 0.06})`, pointerEvents: 'none' }} />;
-          })()}
-        </div>
-      </div>
-
-      {/* Bottom line */}
-      <div style={{ position: 'absolute', left: 64, right: 64, bottom: 40, ...fx(localTime, 3.2, 0.7, 10), display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ width: 26, height: 26, borderRadius: R_DOT, background: ACCENT, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <svg width="13" height="13" viewBox="0 0 12 12"><path d="M2.5 6l2.2 2.2L9.5 3.5" stroke={WHITE} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </span>
-        <span style={{ fontFamily: SANS, fontSize: 16, color: INK_SOFT, fontWeight: 500 }}>Each team asks different questions — <span style={{ color: INK, fontWeight: 600 }}>one record keeps the answers connected.</span></span>
       </div>
     </Scene>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENE 5 — WHEN CLAUDE IS ENOUGH vs WHEN PERRY IS MORE VALUABLE
-// ═══════════════════════════════════════════════════════════════════════════
-function DecisionCard({ title, tag, tagTone, items, localTime, delay, cardBorder, emphasized, logo }) {
-  return (
-    <div style={{ flex: emphasized ? 1.08 : 1, padding: 26, background: WHITE, border: `${emphasized ? 1.5 : 1}px solid ${cardBorder}`, borderRadius: R_PANEL, boxShadow: emphasized ? '0 1px 2px rgba(28,27,24,.05), 0 16px 40px rgba(0,156,127,.12)' : SHADOW, ...fx(localTime, delay, 0.6, 18) }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {logo && <PerryLogo height={26} />}
-          <div style={{ fontFamily: SERIF, fontSize: 23, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>{title}</div>
-        </div>
-        <Chip tone={tagTone}>{tag}</Chip>
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-        {items.map((it, i) => (
-          <div key={it} style={{ ...fx(localTime, delay + 0.4 + i * 0.13, 0.4, 8), display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <span style={{ width: 7, height: 7, borderRadius: R_DOT, background: tagTone === 'accent' ? ACCENT : GREEN, marginTop: 8, flexShrink: 0 }} />
-            <span style={{ fontFamily: SANS, fontSize: 16, fontWeight: 500, color: INK, lineHeight: 1.4 }}>{it}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-function S5_Decision() {
+const END_BG  = '#F9F8F6';
+const END_BTN = '#247B7B';
+
+function S15_PerryEndCard() {
   const { localTime } = useSprite();
+  const ruleW = 76 * grow(localTime, 0.22, 0.55);
   return (
-    <Scene>
-      <Eyebrow n="04" label="Which Tool Fits" />
-      <div style={{ position: 'absolute', left: 64, top: 100, ...fx(localTime, 0.1, 0.6, 12) }}>
-        <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK }}>Not a better question — a fit question.</div>
-      </div>
-      <div style={{ position: 'absolute', left: 64, right: 64, top: 176, display: 'flex', gap: 26, alignItems: 'flex-start' }}>
-        <DecisionCard
-          title="Claude is enough" tag="Task-based work" tagTone="green" cardBorder={BORDER}
-          localTime={localTime} delay={0.3}
-          items={['Small team', 'Limited document volume', 'Mainly one-off review', 'Word & Excel outputs suffice', 'You can supply the documents each task needs']}
-        />
-        <DecisionCard
-          title="Is more valuable" tag="System-based work" tagTone="accent" cardBorder={ACCENT_BD} emphasized logo
-          localTime={localTime} delay={0.55}
-          items={['Many funds, companies & investors', 'Years of records must stay connected', 'Obligations tracked continuously', 'Multiple teams collaborate on one record', "New documents update records — and you don't want to build the schemas yourself"]}
-        />
-      </div>
-      <div style={{ position: 'absolute', left: 64, right: 64, bottom: 38, ...fx(localTime, 2.0, 0.7, 10), textAlign: 'center' }}>
-        <span style={{ fontFamily: SANS, fontSize: 15, color: INK_SOFT, fontWeight: 500 }}>As funds, investors and records accumulate, work shifts from one-off tasks toward a persistent system — <span style={{ color: ACCENT, fontWeight: 700 }}>Perry's core bet.</span></span>
-      </div>
-    </Scene>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENE 7 — FINAL ASSESSMENT
-// ═══════════════════════════════════════════════════════════════════════════
-function LayerCard({ name, sub, verbs, tone, localTime, delay, logo }) {
-  const tones = {
-    claude: { bg: CLAUDE_BG, bd: CLAUDE_BD, title: CLAUDE_INK, sub: CLAUDE, pillBg: CLAUDE_SOFT, pillFg: CLAUDE, pillBd: CLAUDE_BD },
-    light:  { bg: WHITE, bd: ACCENT_BD, title: INK, sub: ACCENT, pillBg: ACCENT_SOFT, pillFg: ACCENT, pillBd: ACCENT_BD },
-  };
-  const s = tones[tone] || tones.light;
-  return (
-    <div style={{ flex: 1, padding: 28, background: s.bg, border: `1px solid ${s.bd}`, borderRadius: R_PANEL, boxShadow: SHADOW, ...fx(localTime, delay, 0.6, 18) }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
-        {logo ? <PerryLogo height={30} /> : <div style={{ fontFamily: SERIF, fontSize: 34, fontWeight: 700, color: s.title }}>{name}</div>}
-      </div>
-      <div style={{ fontFamily: MONO, fontSize: 12.5, color: s.sub, letterSpacing: '0.03em', marginTop: 6, marginBottom: 20 }}>{sub}</div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 9 }}>
-        {verbs.map((v, i) => (
-          <div key={v} style={fx(localTime, delay + 0.4 + i * 0.1, 0.4, 8)}>
-            <span style={{ display: 'inline-block', padding: '8px 15px', borderRadius: R_PILL, fontFamily: SANS, fontSize: 15, fontWeight: 600, background: s.pillBg, color: s.pillFg, border: `1px solid ${s.pillBd}` }}>{v}</span>
+    <Scene fadeIn={0.7} fadeOut={0.25}>
+      <div style={{ position: 'absolute', inset: 0, background: END_BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ ...fx(localTime, 0.1, 0.65, 10) }}>
+            <PerryLogo height={40} />
           </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-function S7_Final() {
-  const { localTime } = useSprite();
-  return (
-    <Scene>
-      <Eyebrow n="05" label="Final Assessment" />
-      <div style={{ position: 'absolute', left: 64, right: 64, top: 128, display: 'flex', gap: 26, alignItems: 'stretch' }}>
-        <LayerCard name="Claude" sub="CAPABILITY LAYER" tone="claude" localTime={localTime} delay={0.2} verbs={['Reads', 'Reasons', 'Extracts', 'Drafts', 'Compares']} />
-        <LayerCard name="Perry" sub="OPERATING-SYSTEM LAYER" tone="light" logo localTime={localTime} delay={0.5} verbs={['Stores', 'Connects', 'Tracks', 'Coordinates', 'Governs']} />
-      </div>
-      <div style={{ position: 'absolute', left: 64, right: 64, top: 428, ...fx(localTime, 1.3, 0.8, 16) }}>
-        <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK, lineHeight: 1.32, letterSpacing: '-0.01em', maxWidth: 1040 }}>
-          Claude provides the capability. Perry <span style={{ color: ACCENT }}>packages that capability</span> into a legal system designed for long-term use.
+          <div style={{ width: ruleW, height: 1, background: '#D5D2CC', marginTop: 16 }} />
+          <div style={{ ...fx(localTime, 0.28, 0.6, 8), marginTop: 24, fontFamily: SERIF, fontSize: 22, fontWeight: 400, fontStyle: 'italic', color: INK, letterSpacing: '-0.01em' }}>
+            The Legal OS for Private Capital.
+          </div>
+          <div style={{ ...fx(localTime, 0.42, 0.55, 8), marginTop: 50, padding: '13px 28px', borderRadius: 10, background: END_BTN, color: WHITE, fontFamily: SANS, fontSize: 15.5, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1 }}>
+            Book a demo →
+          </div>
+          <div style={{ ...fx(localTime, 0.58, 0.5, 6), marginTop: 46, fontFamily: SANS, fontSize: 11.5, fontWeight: 500, color: INK, letterSpacing: '0.22em' }}>
+            USEPERRY.COM
+          </div>
         </div>
       </div>
-      <div style={{ position: 'absolute', left: 64, right: 64, bottom: 46, ...fx(localTime, 2.2, 0.8, 10), display: 'flex', alignItems: 'flex-start', gap: 11 }}>
-        <span style={{ width: 22, height: 22, borderRadius: R_MIN, background: AMBER_SOFT, border: `1px solid ${AMBER_BD}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontFamily: SERIF, fontSize: 13, fontWeight: 700, color: AMBER }}>!</span>
-        <span style={{ fontFamily: SANS, fontSize: 14.5, color: INK_SOFT, fontWeight: 500, maxWidth: 980, lineHeight: 1.45 }}>That value still depends on whether Perry's persistent data, workflow, collaboration &amp; governance are real, mature, and hard to reproduce — worth verifying in the demo.</span>
-      </div>
     </Scene>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ROOT
-// ═══════════════════════════════════════════════════════════════════════════
 function Explainer() {
   return (
-    <Stage width={1280} height={720} duration={75} background={BG} persistKey="claude-perry">
-      <Sprite start={0}     end={6.8}>   <S1_Title /></Sprite>
-      <Sprite start={6.5}   end={9.6}>   <QInterstitial ghost="?" kicker="The Question" lines={['Are Claude and Perry', 'even the same kind of thing?']} /></Sprite>
-      <Sprite start={9.3}   end={17.6}>  <S2_Distinction /></Sprite>
-      <Sprite start={17.3}  end={20.4}>  <QInterstitial ghost="02" kicker="Section 02" lines={['What can Claude', 'already do today?']} /></Sprite>
-      <Sprite start={20.1}  end={29.2}>  <S3_ClaudeDoes /></Sprite>
-      <Sprite start={28.9}  end={32}>    <QInterstitial ghost="03" kicker="Section 03" lines={['So what would', 'Perry actually add?']} /></Sprite>
-      <Sprite start={31.7}  end={40.5}>  <S4_PerryAdds /></Sprite>
-      <Sprite start={40.2}  end={48.1}>  <S4b_Activity /></Sprite>
-      <Sprite start={47.8}  end={56.7}>  <S4c_Unified /></Sprite>
-      <Sprite start={56.4}  end={59.5}>  <QInterstitial ghost="04" kicker="Section 04" lines={['Which one do', 'you actually need?']} /></Sprite>
-      <Sprite start={59.2}  end={66.9}> <S5_Decision /></Sprite>
-      <Sprite start={66.6}  end={74.6}>  <S7_Final /></Sprite>
+    <Stage width={1280} height={720} duration={115} background={BG} persistKey="claude-perry-v2">
+      {/* Argument 1 */}
+      <Sprite start={0}     end={6}>    <S1_Title /></Sprite>
+      <Sprite start={5.7}   end={8.4}>  <QInterstitial ghost="?" kicker="The Question" part="Argument 1" lines={['Claude is already powerful —', 'so why isn\'t it enough?']} /></Sprite>
+      <Sprite start={8.1}   end={15}>   <S2_Categories /></Sprite>
+      <Sprite start={14.7}  end={17.2}> <QInterstitial ghost="01" kicker="Context Window" part="Argument 1" lines={[
+        <>If Claude has a <span style={HI_CLAUDE}>large context window</span></>,
+        <>and a <span style={HI_CLAUDE}>Project folder</span> — where's the difference?</>,
+      ]} /></Sprite>
+      <Sprite start={16.9}  end={24.5}> <S3_DocDifference /></Sprite>
+      <Sprite start={24.2}  end={29.5}> <S4_KnowledgeGraph /></Sprite>
+      <Sprite start={29.2}  end={33.2}> <S4_SchemaClose /></Sprite>
+      <Sprite start={32.9}  end={35.5}> <QInterstitial ghost="?" kicker="For the GC" part="Argument 1" lines={['Why does this', 'matter to a GC?']} /></Sprite>
+      <Sprite start={35.2}  end={42.5}> <S5_GCTrust /></Sprite>
+      <Sprite start={42.2}  end={50}>   <S6_CrossTeam /></Sprite>
+      <Sprite start={49.7}  end={57.5}> <S7_InstitutionalMemory /></Sprite>
+      <Sprite start={57.2}  end={62}>   <S8_Arg1Close /></Sprite>
+
+      {/* Argument 2 */}
+      <Sprite start={61.7}  end={64.4}> <QInterstitial ghost="02" kicker="Argument 2" part="Build vs Buy" lines={['Could our AI team build this', 'with Claude Code in weeks?']} /></Sprite>
+      <Sprite start={64.1}  end={69}>   <S9_Arg2Title /></Sprite>
+      <Sprite start={68.7}  end={76.5}> <S10_Demo /></Sprite>
+      <Sprite start={76.2}  end={83}>   <S11_NotRAG /></Sprite>
+      <Sprite start={82.7}  end={89.5}> <S12_AccuracySystem /></Sprite>
+      <Sprite start={89.2}  end={97}>   <S13_LegalEngineer /></Sprite>
+      <Sprite start={96.7}  end={105}>   <S14_RealCost /></Sprite>
+      <Sprite start={104.5} end={115}>   <S15_PerryEndCard /></Sprite>
     </Stage>
   );
 }
