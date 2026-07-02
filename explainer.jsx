@@ -764,19 +764,19 @@ function S7_Final() {
 // ═══════════════════════════════════════════════════════════════════════════
 function Explainer() {
   return (
-    <Stage width={1280} height={720} duration={100} background={BG} persistKey="claude-perry">
-      <Sprite start={0}     end={4.8}>   <S1_Title /></Sprite>
-      <Sprite start={4.5}   end={7.2}>   <QInterstitial ghost="?" kicker="The Question" lines={['Are Claude and Perry', 'even the same kind of thing?']} /></Sprite>
-      <Sprite start={6.9}   end={18.9}>  <S2_Distinction /></Sprite>
-      <Sprite start={18.6}  end={21.3}>  <QInterstitial ghost="02" kicker="Section 02" lines={['What can Claude', 'already do today?']} /></Sprite>
-      <Sprite start={21}    end={33}>    <S3_ClaudeDoes /></Sprite>
-      <Sprite start={32.7}  end={35.5}>  <QInterstitial ghost="03" kicker="Section 03" lines={['So what would', 'Perry actually add?']} /></Sprite>
-      <Sprite start={35.2}  end={52.4}>  <S4_PerryAdds /></Sprite>
-      <Sprite start={52.1}  end={66.4}>  <S4b_Activity /></Sprite>
-      <Sprite start={66.1}  end={79.4}>  <S4c_Unified /></Sprite>
-      <Sprite start={79.1}  end={81.8}>  <QInterstitial ghost="04" kicker="Section 04" lines={['Which one do', 'you actually need?']} /></Sprite>
-      <Sprite start={81.5}  end={93.1}> <S5_Decision /></Sprite>
-      <Sprite start={92.8}  end={100}>   <S7_Final /></Sprite>
+    <Stage width={1280} height={720} duration={75} background={BG} persistKey="claude-perry">
+      <Sprite start={0}     end={6.8}>   <S1_Title /></Sprite>
+      <Sprite start={6.5}   end={9.6}>   <QInterstitial ghost="?" kicker="The Question" lines={['Are Claude and Perry', 'even the same kind of thing?']} /></Sprite>
+      <Sprite start={9.3}   end={17.6}>  <S2_Distinction /></Sprite>
+      <Sprite start={17.3}  end={20.4}>  <QInterstitial ghost="02" kicker="Section 02" lines={['What can Claude', 'already do today?']} /></Sprite>
+      <Sprite start={20.1}  end={29.2}>  <S3_ClaudeDoes /></Sprite>
+      <Sprite start={28.9}  end={32}>    <QInterstitial ghost="03" kicker="Section 03" lines={['So what would', 'Perry actually add?']} /></Sprite>
+      <Sprite start={31.7}  end={40.5}>  <S4_PerryAdds /></Sprite>
+      <Sprite start={40.2}  end={48.1}>  <S4b_Activity /></Sprite>
+      <Sprite start={47.8}  end={56.7}>  <S4c_Unified /></Sprite>
+      <Sprite start={56.4}  end={59.5}>  <QInterstitial ghost="04" kicker="Section 04" lines={['Which one do', 'you actually need?']} /></Sprite>
+      <Sprite start={59.2}  end={66.9}> <S5_Decision /></Sprite>
+      <Sprite start={66.6}  end={74.6}>  <S7_Final /></Sprite>
     </Stage>
   );
 }
