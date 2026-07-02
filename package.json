@@ -6,9 +6,12 @@
   "scripts": {
     "dev": "vite",
     "start": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "export:mp4": "node scripts/export-mp4.mjs"
   },
   "devDependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "playwright": "^1.52.0",
     "vite": "^6.3.5"
   }
 }

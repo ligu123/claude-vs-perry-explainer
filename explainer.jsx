@@ -1217,9 +1217,14 @@ function S15_PerryEndCard() {
           <div style={{ ...fx(localTime, 0.28, 0.6, 8), marginTop: 24, fontFamily: SERIF, fontSize: 22, fontWeight: 400, fontStyle: 'italic', color: INK, letterSpacing: '-0.01em' }}>
             The Legal OS for Private Capital.
           </div>
-          <div style={{ ...fx(localTime, 0.42, 0.55, 8), marginTop: 50, padding: '13px 28px', borderRadius: 10, background: END_BTN, color: WHITE, fontFamily: SANS, fontSize: 15.5, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1 }}>
+          <a
+            href="https://calendly.com/vaneesa-useperry/30min"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ ...fx(localTime, 0.42, 0.55, 8), marginTop: 50, padding: '13px 28px', borderRadius: 10, background: END_BTN, color: WHITE, fontFamily: SANS, fontSize: 15.5, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, textDecoration: 'none' }}
+          >
             Book a demo →
-          </div>
+          </a>
           <div style={{ ...fx(localTime, 0.58, 0.5, 6), marginTop: 46, fontFamily: SANS, fontSize: 11.5, fontWeight: 500, color: INK, letterSpacing: '0.22em' }}>
             USEPERRY.COM
           </div>
@@ -1231,7 +1236,7 @@ function S15_PerryEndCard() {
 
 function Explainer() {
   return (
-    <Stage width={1280} height={720} duration={115} background={BG} persistKey="claude-perry-v2">
+    <Stage width={1280} height={720} duration={115} background={BG} persistKey="claude-perry-v2" loop={false}>
       {/* Argument 1 */}
       <Sprite start={0}     end={6}>    <S1_Title /></Sprite>
       <Sprite start={5.7}   end={8.4}>  <QInterstitial ghost="?" kicker="The Question" part="Argument 1" lines={['Claude is already powerful —', 'so why isn\'t it enough?']} /></Sprite>

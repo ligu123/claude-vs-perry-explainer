@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 .thumbnail
 dist/
+.export-frames/
+*.mp4
