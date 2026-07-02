@@ -489,9 +489,9 @@ function S4b_Activity() {
     ['Annual reporting', 'Investor Relations', 'Due 30 Jun', 'In progress', 'accent'],
   ];
   const feed = [
-    ['Claude', 'ai', 'Clause extracted', 'LPA · §8.4', '2m'],
+    ['Perry', 'ai', 'Clause extracted', 'LPA · §8.4', '2m'],
     ['Legal Ops', 'person', 'Entity match corrected', 'Acme Ltd', '6m'],
-    ['Claude', 'ai', 'Obligation updated', '66% → 75%', '14m'],
+    ['Perry', 'ai', 'Obligation updated', '66% → 75%', '14m'],
     ['G. Counsel', 'person', 'Approval granted', 'Board consent', '1h'],
     ['System', 'system', 'Data exported', 'CSV + source links', '2h'],
   ];
