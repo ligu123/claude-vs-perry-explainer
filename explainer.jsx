@@ -131,7 +131,9 @@ function ColLabel({ children }) {
 
 function Scene({ children, fadeIn = 0.5, fadeOut = 0.5, drift = 0 }) {
   const { localTime, duration } = useSprite();
-  const op = Math.min(clamp(localTime / fadeIn, 0, 1), clamp((duration - localTime) / fadeOut, 0, 1));
+  const fadeInOp = clamp(localTime / fadeIn, 0, 1);
+  const fadeOutOp = fadeOut > 0 ? clamp((duration - localTime) / fadeOut, 0, 1) : 1;
+  const op = Math.min(fadeInOp, fadeOutOp);
   const s = 1 + drift * (localTime / Math.max(duration, 0.01));
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: op, transform: `scale(${s})`, transformOrigin: '50% 45%' }}>
@@ -193,7 +195,6 @@ function S1_Title() {
   const ruleW = 380 * grow(localTime, 0.35, 0.9);
   return (
     <Scene>
-      <Eyebrow n="01" label="Argument 1" />
       <div style={{ position: 'absolute', left: 64, top: 210, right: 64 }}>
         <div style={{ ...fx(localTime, 0.15, 0.7, 18), fontFamily: SERIF, fontSize: 72, fontWeight: 600, color: INK, lineHeight: 1.04, letterSpacing: '-0.02em' }}>
           Why Perry Does What Claude Cannot
@@ -204,7 +205,7 @@ function S1_Title() {
         </div>
       </div>
       <div style={{ position: 'absolute', left: 64, bottom: 58, ...fx(localTime, 1.0, 0.7, 10) }}>
-        <span style={{ fontFamily: MONO, fontSize: 13, color: INK_FAINT }}>Not "Claude isn't smart enough" — they're different product categories.</span>
+        <span style={{ fontFamily: MONO, fontSize: 13, color: INK_FAINT }}>Not "Claude isn't smart enough." They're different product categories.</span>
       </div>
     </Scene>
   );
@@ -218,7 +219,7 @@ function S2_Categories() {
     <Scene>
       <Eyebrow n="01 · A" label="Different Questions" />
       <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
-        <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Claude is already powerful — so why isn't it enough?</div>
+        <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Claude is already powerful. So why isn't it enough?</div>
         <div style={{ fontFamily: SANS, fontSize: 14.5, fontWeight: 500, color: INK_FAINT, marginTop: 6, lineHeight: 1.4 }}>In many scenarios a vertical platform is genuinely unnecessary. The judgment is about category, not intelligence.</div>
       </div>
 
@@ -295,7 +296,7 @@ function GraphPanel({ localTime }) {
   const features = [
     'Updates existing nodes when amendments arrive',
     'Same investor merged across LPA, side letter & amendment',
-    'Obligation status tracked — triggered, fulfilled, waived',
+    'Obligation status tracked: triggered, fulfilled, waived',
     'Return to the same canonical source six years later',
   ];
   return (
@@ -346,7 +347,7 @@ function S3_DocDifference() {
         <div style={{ fontFamily: SERIF, fontSize: 28, fontWeight: 600, color: INK, lineHeight: 1.2, letterSpacing: '-0.01em' }}>
           If Claude has a <span style={hi}>large context window</span> and a <span style={hi}>Project folder</span>, where is the difference?
         </div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 8 }}>Not whether docs fit in context — whether they become a continuously maintainable structured knowledge graph.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 8 }}>Not whether docs fit in context, but whether they become a continuously maintainable structured knowledge graph.</div>
       </div>
       <div style={{ position: 'absolute', left: 64, right: 64, top: 188, display: 'flex', gap: 24, height: 420 }}>
         <div style={{ flex: 1, ...fx(localTime, 0.3, 0.6, 16) }}><EphemeralPanel localTime={localTime} /></div>
@@ -396,7 +397,7 @@ function IntakePanel({ localTime }) {
         </div>
       ))}
       <div style={{ ...fx(localTime, 0.85, 0.45, 8), marginTop: 'auto', padding: '9px 11px', background: AMBER_SOFT, border: `1px solid ${AMBER_BD}`, borderRadius: R_CTRL, fontFamily: SANS, fontSize: 11.5, fontWeight: 500, color: INK, lineHeight: 1.35 }}>
-        New files merge into the existing fund record — not a new chat.
+        New files merge into the existing fund record, not a new chat.
       </div>
     </div>
   );
@@ -514,7 +515,7 @@ function S4_SchemaClose() {
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 96px' }}>
         <div style={{ textAlign: 'center', maxWidth: 920 }}>
           <div style={{ ...fx(localTime, 0.3, 0.7, 18), fontFamily: SERIF, fontSize: 50, fontWeight: 600, color: INK, lineHeight: 1.12, letterSpacing: '-0.02em' }}>
-            Documents in — structured fund schema out.
+            Documents in, structured fund schema out.
           </div>
           <div style={{ ...fx(localTime, 0.65, 0.65, 12), marginTop: 22, fontFamily: SANS, fontSize: 24, fontWeight: 500, color: INK_SOFT, lineHeight: 1.35 }}>
             Not a longer chat history.
@@ -575,7 +576,7 @@ function SourceLinkedVisual({ localTime }) {
             <div style={{ position: 'relative', fontFamily: SANS, fontSize: 12.5, fontWeight: 500, color: INK_SOFT, lineHeight: 1.55 }}>
               <span style={{ color: INK_FAINT }}>8.4 </span>
               <span style={HI_INK}>Major Investors</span>
-              <span style={{ color: INK_FAINT }}> — holders of 15% or more shall receive quarterly reporting…</span>
+              <span style={{ color: INK_FAINT }}>…holders of 15% or more shall receive quarterly reporting…</span>
             </div>
           </div>
         </div>
@@ -679,7 +680,7 @@ function S5_GCTrust() {
       <div style={{ position: 'absolute', left: 64, right: 64, top: 188, bottom: 88, display: 'flex', gap: 36, alignItems: 'stretch' }}>
         <TrustPillar
           title="Source-linked answers"
-          body="Every number and obligation links back to a specific source — not what the model remembers."
+          body="Every number and obligation links back to a specific source, not what the model remembers."
           localTime={localTime}
           delay={0.3}
         >
@@ -836,7 +837,7 @@ function DataFlywheel({ localTime }) {
       <div style={{ width: 248, flexShrink: 0, alignSelf: 'center', ...fx(localTime, 0.7, 0.55, 12) }}>
         <div style={{ fontFamily: SANS, fontSize: 11.5, fontWeight: 600, color: INK_FAINT, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 12 }}>What the flywheel means</div>
         <div style={{ fontFamily: SERIF, fontSize: 20, fontWeight: 600, color: INK, lineHeight: 1.35, letterSpacing: '-0.01em', marginBottom: 14 }}>
-          Every matter adds back to the fund record — not a one-off answer lost in chat.
+          Every matter adds back to the fund record, not a one-off answer lost in chat.
         </div>
         <div style={{ fontFamily: SANS, fontSize: 14, fontWeight: 500, color: INK_SOFT, lineHeight: 1.5 }}>
           The next review starts with prior positions, consents, and restrictions already in context. Each cycle makes the record <span style={HI_ACCENT}>more reliable</span> than the last.
@@ -853,7 +854,7 @@ function S7_InstitutionalMemory() {
       <Eyebrow n="01 · F" label="Compounding Context" />
       <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
         <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK, letterSpacing: '-0.01em' }}>Each transaction makes the next decision better.</div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry turns every review into data the fund can reuse — a flywheel, not a one-off answer.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry turns every review into data the fund can reuse: a flywheel, not a one-off answer.</div>
       </div>
       <div style={{ position: 'absolute', left: 64, right: 64, top: 178, bottom: 44, ...fx(localTime, 0.2, 0.5, 10) }}>
         <DataFlywheel localTime={localTime} />
@@ -866,7 +867,7 @@ function S8_Arg1Close() {
   const { localTime } = useSprite();
   return (
     <Scene fadeIn={0.6} fadeOut={0.5}>
-      <Eyebrow n="01" label="Argument 1 — Close" />
+      <Eyebrow n="01" label="Close" />
       <div style={{ position: 'absolute', left: 64, right: 64, top: 200, textAlign: 'center', ...fx(localTime, 0.2, 0.8, 20) }}>
         <div style={{ fontFamily: SERIF, fontSize: 52, fontWeight: 600, color: INK, lineHeight: 1.12, letterSpacing: '-0.02em', maxWidth: 900, margin: '0 auto' }}>
           Claude helps you do legal work.
@@ -922,7 +923,7 @@ function S10_Demo() {
           </div>
           <div style={{ background: ACCENT_SOFT, padding: '12px 14px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', ...fx(localTime, 0.45, 0.45, 8) }}>
             <span style={{ fontFamily: MONO, fontSize: 17, fontWeight: 700, color: ACCENT }}>~80%</span>
-            <span style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: INK, marginTop: 2 }}>Years of product iteration</span>
+            <span style={{ fontFamily: SANS, fontSize: 10.5, fontWeight: 600, color: INK, marginTop: 2 }}>Full-time product iteration</span>
           </div>
 
           <div style={{ background: CLAUDE_BG, borderRight: `1px solid ${CLAUDE_BD}`, borderTop: `1px solid ${BORDER}`, minHeight: 52, display: 'flex', alignItems: 'center', padding: '0 18px', ...fx(localTime, 0.35, 0.6, 16) }}>
@@ -1032,13 +1033,13 @@ function S11_NotRAG() {
       <Eyebrow n="02 · B" label="Not RAG + Prompts" />
       <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
         <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK }}>Fund legal work is not unstructured Q&A.</div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>It's an operating system with fixed objects and relationships — they don't emerge from "adding a legal skill."</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>It's an operating system with fixed objects and relationships. They don't emerge from "adding a legal skill."</div>
       </div>
 
       <div style={{ position: 'absolute', left: 64, right: 64, top: 188, bottom: 88, display: 'flex', gap: 36, alignItems: 'stretch' }}>
         <TrustPillar
           title="RAG + legal prompts"
-          body="A search box over a document library — answers assembled from retrieved chunks."
+          body="A search box over a document library. Answers assembled from retrieved chunks."
           localTime={localTime}
           delay={0.3}
         >
@@ -1046,7 +1047,7 @@ function S11_NotRAG() {
         </TrustPillar>
         <TrustPillar
           title="Fund legal operating system"
-          body="Fixed objects and relationships in a governed record — source-linked and persistent."
+          body="Fixed objects and relationships in a governed record, source-linked and persistent."
           localTime={localTime}
           delay={0.45}
         >
@@ -1055,7 +1056,7 @@ function S11_NotRAG() {
       </div>
 
       <BottomBar localTime={localTime} delay={2.0}>
-        Perry's fund context comes from <span style={HI_ACCENT}>domain model + engineering + legal QA</span> — not prompt engineering.
+        Perry's fund context comes from <span style={HI_ACCENT}>domain model + engineering + legal QA</span>, not prompt engineering.
       </BottomBar>
     </Scene>
   );
@@ -1074,7 +1075,7 @@ function S12_AccuracySystem() {
       <Eyebrow n="02 · C" label="Accuracy Is a System" />
       <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
         <div style={{ fontFamily: SERIF, fontSize: 30, fontWeight: 600, color: INK }}>Accuracy can't be solved by switching to a stronger model.</div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry needs every run to make the record more reliable — not regenerate from scratch.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry needs every run to make the record more reliable, not regenerate from scratch.</div>
       </div>
 
       <div style={{ position: 'absolute', left: 64, right: 64, top: 168, bottom: 44, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1082,7 +1083,7 @@ function S12_AccuracySystem() {
         <div style={{ ...fx(localTime, 0.25, 0.5, 10), padding: '16px 22px', background: CLAUDE_BG, border: `1px solid ${CLAUDE_BD}`, borderRadius: R_CARD, display: 'flex', alignItems: 'center', gap: 16 }}>
           <Chip tone="claude" style={{ flexShrink: 0 }}>Claude Code projects</Chip>
           <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_SOFT }}>
-            Usually stop at <span style={HI_CLAUDE}>regenerate on every run</span> — no persistent improvement.
+            Usually stop at <span style={HI_CLAUDE}>regenerate on every run</span>. No persistent improvement.
           </div>
         </div>
 
@@ -1138,7 +1139,7 @@ function S13_LegalEngineer() {
       <Eyebrow n="02 · D" label="Legal Engineer QA" />
       <div style={{ position: 'absolute', left: 64, right: 64, top: 96, ...fx(localTime, 0.1, 0.6, 12) }}>
         <div style={{ fontFamily: SERIF, fontSize: 29, fontWeight: 600, color: INK }}>Legal engineer review is part of the product.</div>
-        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry places model outputs inside a legal QA workflow — not just wrapping Claude in a UI.</div>
+        <div style={{ fontFamily: SANS, fontSize: 15, fontWeight: 500, color: INK_FAINT, marginTop: 6 }}>Perry places model outputs inside a legal QA workflow, not just wrapping Claude in a UI.</div>
       </div>
       <div style={{ position: 'absolute', left: 64, right: 64, top: 168, bottom: 44, display: 'flex', flexDirection: 'column', ...fx(localTime, 0.3, 0.6, 16) }}>
         <div style={{ padding: '18px 22px 16px', background: WHITE, border: `1.5px solid ${ACCENT_BD}`, borderRadius: R_PANEL, boxShadow: SHADOW }}>
@@ -1207,7 +1208,7 @@ function S15_PerryEndCard() {
   const { localTime } = useSprite();
   const ruleW = 76 * grow(localTime, 0.22, 0.55);
   return (
-    <Scene fadeIn={0.7} fadeOut={0.25}>
+    <Scene fadeIn={0.7} fadeOut={0}>
       <div style={{ position: 'absolute', inset: 0, background: END_BG, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <div style={{ ...fx(localTime, 0.1, 0.65, 10) }}>
@@ -1237,25 +1238,23 @@ function S15_PerryEndCard() {
 function Explainer() {
   return (
     <Stage width={1280} height={720} duration={115} background={BG} persistKey="claude-perry-v2" loop={false}>
-      {/* Argument 1 */}
       <Sprite start={0}     end={6}>    <S1_Title /></Sprite>
-      <Sprite start={5.7}   end={8.4}>  <QInterstitial ghost="?" kicker="The Question" part="Argument 1" lines={['Claude is already powerful —', 'so why isn\'t it enough?']} /></Sprite>
+      <Sprite start={5.7}   end={8.4}>  <QInterstitial ghost="?" kicker="The Question" lines={['Claude is already powerful.', 'So why isn\'t it enough?']} /></Sprite>
       <Sprite start={8.1}   end={15}>   <S2_Categories /></Sprite>
-      <Sprite start={14.7}  end={17.2}> <QInterstitial ghost="01" kicker="Context Window" part="Argument 1" lines={[
+      <Sprite start={14.7}  end={17.2}> <QInterstitial ghost="01" kicker="Context Window" lines={[
         <>If Claude has a <span style={HI_CLAUDE}>large context window</span></>,
-        <>and a <span style={HI_CLAUDE}>Project folder</span> — where's the difference?</>,
+        <>and a <span style={HI_CLAUDE}>Project folder</span>, where's the difference?</>,
       ]} /></Sprite>
       <Sprite start={16.9}  end={24.5}> <S3_DocDifference /></Sprite>
       <Sprite start={24.2}  end={29.5}> <S4_KnowledgeGraph /></Sprite>
       <Sprite start={29.2}  end={33.2}> <S4_SchemaClose /></Sprite>
-      <Sprite start={32.9}  end={35.5}> <QInterstitial ghost="?" kicker="For the GC" part="Argument 1" lines={['Why does this', 'matter to a GC?']} /></Sprite>
+      <Sprite start={32.9}  end={35.5}> <QInterstitial ghost="?" kicker="For the GC" lines={['Why does this', 'matter to a GC?']} /></Sprite>
       <Sprite start={35.2}  end={42.5}> <S5_GCTrust /></Sprite>
       <Sprite start={42.2}  end={50}>   <S6_CrossTeam /></Sprite>
       <Sprite start={49.7}  end={57.5}> <S7_InstitutionalMemory /></Sprite>
       <Sprite start={57.2}  end={62}>   <S8_Arg1Close /></Sprite>
 
-      {/* Argument 2 */}
-      <Sprite start={61.7}  end={64.4}> <QInterstitial ghost="02" kicker="Argument 2" part="Build vs Buy" lines={['Could our AI team build this', 'with Claude Code in weeks?']} /></Sprite>
+      <Sprite start={61.7}  end={64.4}> <QInterstitial ghost="02" kicker="Build vs Buy" lines={['Could our AI team build this', 'with Claude Code in weeks?']} /></Sprite>
       <Sprite start={64.1}  end={69}>   <S9_Arg2Title /></Sprite>
       <Sprite start={68.7}  end={76.5}> <S10_Demo /></Sprite>
       <Sprite start={76.2}  end={83}>   <S11_NotRAG /></Sprite>
